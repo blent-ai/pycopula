@@ -434,10 +434,13 @@ class GaussianCopula(Copula):
 				else:
 					sigmaDet = np.linalg.det(S)
 					sigmaInv = np.linalg.inv(S)
+				
+				# The inverse CDF of the normal distribution (do not place it in loop, hungry process)
+				ICDF = norm.ppf(pobs)
 				lh = 0
+				
 				for i in range(n):
-					u = [ (pobs[i,j] - mu[j]) / std[j] for j in range(self.dim) ]
-					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u, np.dot(sigmaInv - np.identity(self.dim), u)))
+					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(ICDF[i,  :], np.dot(sigmaInv - np.identity(self.dim), ICDF[i,  :])))
 					lh += np.log(cDens)
 
 				return -lh
