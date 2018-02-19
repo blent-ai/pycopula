@@ -20,23 +20,37 @@ clayton = ArchimedeanCopula(family="clayton", dim=2)
 indep = Copula(dim=2, name='frechet_up')
 gaussian = GaussianCopula(dim=2)
 
-u, v, Carchi = clayton.cdf_2d()
-u, v, Cindep = indep.cdf_2d()
-u, v, Cgauss = gaussian.pdf_2d(zclip=4)
+clayton.fit(data, method='cml')
+gaussian.fit(data)
 
-#clayton.fit(data)
+u, v, Carchi = clayton.pdf_2d()
+u, v, Cindep = indep.cdf_2d()
+u, v, Cgauss = gaussian.cdf_2d()
+u, v, cgauss = gaussian.pdf_2d(zclip=5)
+
+#sys.exit()
 print(clayton)
 print(indep)
 
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(121, projection='3d', title="Gaussian copula CDF")
 X, Y = np.meshgrid(u, v)
 
 #c[c>5]= np.nan
-ax.set_zlim(0, 4)
+ax.set_zlim(0, 1)
 #ax.set_zlim(0, 8)
 
 ax.plot_surface(X, Y, Cgauss, cmap=cm.Blues)
 ax.plot_wireframe(X, Y, Cgauss, color='black', alpha=0.3)
+
+ax = fig.add_subplot(122, projection='3d', title="Gaussian copula PDF")
+X, Y = np.meshgrid(u, v)
+
+#c[c>5]= np.nan
+ax.set_zlim(0, 5)
+#ax.set_zlim(0, 8)
+
+ax.plot_surface(X, Y, cgauss, cmap=cm.Blues)
+ax.plot_wireframe(X, Y, cgauss, color='black', alpha=0.3)
 
 plt.show()

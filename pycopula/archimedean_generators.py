@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-	This file contains all the classes for copula objects.
+	This file contains the generators and their inverses for common archimedean copulas.
 """
 
 import numpy as np

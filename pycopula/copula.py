@@ -25,7 +25,7 @@ from scipy.misc import factorial
 import statsmodels.api as sm
 import numpy as np
 
-# An abstract copula object, which is similar to the independency copula
+# An abstract copula object
 class Copula():
 
 	def __init__(self, dim=2, name='indep'):
@@ -33,16 +33,53 @@ class Copula():
 			raise ValueError("Copula dimension must be an integer greater than 1.")
 		self.dim = dim
 		self.name = name
+		self.kendall = None
+		self.pearson = None
+		self.spearman = None
 
 	def __str__(self):
 		return "Copula ({0}).".format(self.name)
 
-	def checkDimension(self, x):
+	def _checkDimension(self, x):
 		if len(x) != self.dim:
 			raise ValueError("Expected vector of dimension {0}, get vector of dimension {1}".format(self.dim, len(x)))
 
+	def correlations(self, X):
+		"""
+		Compute the correlations of the specified data. Only available when dimension of copula is 2.
+
+		Parameters
+		----------
+		X : numpy array (of size n * 2)
+			Values to compute correlations.
+
+		Returns
+		-------
+		float
+			The Kendall tau.
+		float
+			The Pearson's R
+		float
+			The Spearman's R
+		"""
+		if self.dim != 2:
+			raise Exception("Correlations can not be computed when dimension is greater than 2.")
+		self.kendall = kendalltau(X[:,0], X[:,1])[0]
+		self.pearson = pearsonr(X[:,0], X[:,1])[0]
+		self.spearman = spearmanr(X[:,0], X[:,1])[0]
+		return self.kendall, self.pearson, self.spearman
+
+	def kendall(self):
+		return self.kendall
+
+	def pearson(self):
+		return self.pearson
+
+	def spearman(self):
+		return self.spearman	
+
 	def cdf(self, x):
-		self.checkDimension(x)
+		self._checkDimension(x)
 		if self.name == 'indep':
 			return np.prod(x)
 		elif self.name == 'frechet_up':
@@ -64,7 +101,7 @@ class Copula():
 		return u, v, np.asarray(C)
 
 	def pdf(self, x):
-		self.checkDimension(x)
+		self._checkDimension(x)
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
@@ -85,12 +122,6 @@ class Copula():
 			C.append(row)
 
 		return u, v, np.asarray(C)
-
-	#def fit(self, data):
-
-
-	#def getCorrelations(self):
-				
 		
 
 class ArchimedeanCopula(Copula):
@@ -123,34 +154,72 @@ class ArchimedeanCopula(Copula):
 		
 
 	def __str__(self):
-		return "Archimedean Copula ({}) :".format(self.family) + "\n*\tParameter : {:1.6f}".format(self.parameter)
+		return "Archimedean Copula ({0}) :".format(self.family) + "\n*\tParameter : {:1.6f}".format(self.parameter)
 
-	def checkDimension(self, x):
+	def _checkDimension(self, x):
+		"""
+		Check if the number of variables is equal to the dimension of the copula.
+		"""
 		if len(x) != self.dim:
 			raise ValueError("Expected vector of dimension {0}, get vector of dimension {1}".format(self.dim, len(x)))
 
 	def cdf(self, x):
-		# Gérer le cas où le générateur inverse n'est pas défini
-		self.checkDimension(x)
+		"""
+		Returns the CDF of the copula.
+
+		Parameters
+		----------
+		x : numpy array (of size copula dimension)
+			Values where CDF value is computed.
+
+		Returns
+		-------
+		float
+			The CDF value on x.
+		"""
+		# TODO : Gérer le cas où le générateur inverse n'est pas défini
+		self._checkDimension(x)
 		return self.generatorInvert(sum([ self.generator(v, self.parameter) for v in x ]), self.parameter)
 
 	def pdf_param(self, x, theta):
-		# gérer la n-ième dérivée de la réciproque de phi
-		self.checkDimension(x)
+		"""
+		Returns the PDF of the copula with the specified theta. Use this when you want to compute PDF with another parameter.
+
+		Parameters
+		----------
+		x : numpy array (of size copula dimension)
+			Values where PDF value is computed.
+		theta : float
+			The custom parameter.
+
+		Returns
+		-------
+		float
+			The PDF value on x.
+		"""
+		# TODO : gérer la n-ième dérivée de la réciproque de phi
+		self._checkDimension(x)
+		# prod is the product of the derivatives of the generator for each variable
 		prod = 1
+		# The sum of generators that will be computed on the invert derivative
 		sumInvert = 0
+		# The future function (if it exists) corresponding to the n-th derivative of the invert
 		invertNDerivative = None
 
+		# For each family, the structure is the same
 		if self.family == 'clayton':
+			# We compute product and sum
 			for i in range(self.dim):
 				prod *= -x[i]**(-theta - 1.)
 				sumInvert += self.generator(x[i], theta)
 
+			# We define (when possible) the n-th derivative of the invert of the generator
 			def claytonInvertnDerivative(t, theta, order):
 				product = 1
 				for i in range(1, order):
 					product *= (-1. / theta - i)
 				return -theta**(order - 1) * product * (1. + theta * t)**(-1. / theta - order)
+
 			invertNDerivative = claytonInvertnDerivative	
 
 		elif self.family == 'gumbel':
@@ -200,21 +269,67 @@ class ArchimedeanCopula(Copula):
 				invertNDerivative = amhInvertDerivative
 			# Fix for n dimension	
 
+		# TODO : Implement numerical derivative of the invert
 		if invertNDerivative == None:
 			raise Exception("The {0}-th derivative of the invert of the generator is not defined.".format(self.dim))
+		# We compute the PDF of the copula
 		return prod * invertNDerivative(sumInvert, theta, self.dim)
 
 	def pdf(self, x):
+		"""
+		Returns de PDF of the copula.
+
+		Parameters
+		----------
+		x : numpy array (of size copula dimension)
+			Values where PDF value is computed.
+
+		Returns
+		-------
+		float
+			The PDF value on x.
+		"""
 		return self.pdf_param(x, self.parameter)
 
 	def fit(self, X, method='cml', verbose=False, thetaBounds=None):
+		"""
+		Fit the archimedean copula with specified data.
+
+		Parameters
+		----------
+		X : numpy array (of size n * copula dimension)
+			The data to fit.
+		method : str
+			The estimation method to use. Default is cml.
+		verbose : bool
+			Output various informations during fitting process.
+		thetaBounds : tuple
+			Definition set of theta. Use this only with custom family.
+
+		Returns
+		-------
+		float
+			The estimated parameter of the archimedean copula.
+		"""
 		n = X.shape[0]
 		if n < 1:
 			raise ValueError("At least two values are needed to fit the copula.")
-		self.checkDimension(X[0,:])
+		self._checkDimension(X[0,:])
+
+		# Moments method (only when dimension = 2)
+		if method == 'moments':
+			if self.kendall == None:
+				self.correlations(X)
+			if self.family == 'clayton':
+				self.parameter = 2. * self.kendall / (1. - self.kendall)
+			elif self.family == 'gumbel':
+				self.parameter = 1. / (1. - self.kendall)
+			else:
+				raise Exception("Moments estimation is not available for this copula.")
+			
 
 		# Canonical Maximum Likelihood Estimation
-		if method == 'cml':
+		elif method == 'cml':
 			# Pseudo-observations from real data X
 			pobs = []
 			for i in range(self.dim):
@@ -253,20 +368,90 @@ class ArchimedeanCopula(Copula):
 
 class GaussianCopula(Copula):
 
-	def __init__(self, dim=2, sigma=[[1, 0.5], [0.5, 1]]):
+	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):
 		super(GaussianCopula, self).__init__()
-		self.sigma = np.asarray(sigma)
+		self.setCovariance(sigma)
 
 	def cdf(self, x):
-		self.checkDimension(x)
+		self._checkDimension(x)
 		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.sigma)
 
+	def setCovariance(self, sigma):
+		"""
+		Set the covariance of the copula.
+
+		Parameters
+		----------
+		sigma : numpy array (of size copula dimensions * copula dimension)
+			The definite positive covariance matrix.
+		"""
+		S = np.asarray(sigma)
+		if len(S.shape) > 2:
+			raise ValueError("2-dimensional array expected, get {0}-dimensional array.".format(len(S.shape)))
+		if S.shape[0] != S.shape[1]:
+			raise ValueError("Covariance matrix must be a squared matrix of dimension {0}".format(self.dim))
+		if len([ 1 for i in range(S.shape[0]) if S[i, i] <= 0]) > 0:
+			raise ValueError("Null or negative variance encountered in covariance matrix.")
+		if not(np.array_equal(np.transpose(S), S)):
+			raise ValueError("Covariance matrix is not symmetric.")
+		self.sigma = S
+		self.sigmaDet = np.linalg.det(S)
+		self.sigmaInv = np.linalg.inv(S)
+
 	def pdf(self, x):
-		self.checkDimension(x)
-		detSigma = np.linalg.det(self.sigma)
-		sigmaInv = np.linalg.inv(self.sigma)
+		self._checkDimension(x)
 		u_i = [ norm.ppf(v) for v in x ]
-		return detSigma**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i)))
+		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
+
+	def fit(self, X, method='cml', verbose=True):
+		print("Fitting Gaussian copula.")
+		n = X.shape[0]
+		if n < 1:
+			raise ValueError("At least two values are needed to fit the copula.")
+		self._checkDimension(X[0,:])
+
+		# Canonical Maximum Likelihood Estimation
+		if method == 'cml':
+			# Pseudo-observations from real data X
+			pobs = []
+			for i in range(self.dim):
+				order = X[:,i].argsort()
+				ranks = order.argsort()
+				u_i = [ (r + 1) / (n + 1) for r in ranks ]
+				pobs.append(u_i)
+
+			pobs = np.transpose(np.asarray(pobs))
+			mu = [ sum(pobs[:,j]) / n for j in range(self.dim) ]
+			std = [ (sum((pobs[:,j] - np.repeat(mu[j], n))**2) / n)**0.5 for j in range(self.dim) ]
+
+			def neg_log_likelihood(rho):
+				S = np.identity(self.dim)
+				S[0][1] = rho[0]
+				S[1][0] = rho[0]
+				if self.dim == 2:
+					sigmaDet = S[0][0] * S[1][1] - rho**2
+					sigmaInv = 1. / sigmaDet * np.asarray([[ S[1][1], -rho], [ -rho, S[0][0] ]])
+				else:
+					sigmaDet = np.linalg.det(S)
+					sigmaInv = np.linalg.inv(S)
+				lh = 0
+				for i in range(n):
+					u = [ (pobs[i,j] - mu[j]) / std[j] for j in range(self.dim) ]
+					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u, np.dot(sigmaInv - np.identity(self.dim), u)))
+					lh += np.log(cDens)
+
+				return -lh
+				#return sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i)))
+
+			rho_start = 0.0
+			res = minimize(neg_log_likelihood, rho_start, method = 'Nelder-Mead')	
+			print(res)
+			# TODO : Find nearest definite positive matrix
+			rho = res['x'][0]
+			self.sigma = np.identity(self.dim)
+			self.sigma[0][1] = rho
+			self.sigma[1][0] = rho
+			self.setCovariance(self.sigma)
 
 #class StudentCopula(Copula):
 

@@ -1,5 +1,5 @@
 # PyCopula - Study dependencies with copulas
-PyCopula is an easy-to-use library that allows you to study random variables dependencies with copulas in Python.
+PyCopula is an easy-to-use Python library that allows you to study random variables dependencies with copulas.
 
 # Development
 
