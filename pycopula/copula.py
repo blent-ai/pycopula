@@ -19,6 +19,8 @@ import sys
 sys.path.insert(0, '..')
 
 import archimedean_generators as generators
+import math_misc
+
 from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
 from scipy.optimize import minimize
 from scipy.misc import factorial
@@ -400,7 +402,7 @@ class GaussianCopula(Copula):
 
 	def pdf(self, x):
 		self._checkDimension(x)
-		u_i = [ norm.ppf(v) for v in x ]
+		u_i = norm.ppf(x)
 		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
 
 	def fit(self, X, method='cml', verbose=True):
@@ -421,13 +423,19 @@ class GaussianCopula(Copula):
 				pobs.append(u_i)
 
 			pobs = np.transpose(np.asarray(pobs))
-			mu = [ sum(pobs[:,j]) / n for j in range(self.dim) ]
-			std = [ (sum((pobs[:,j] - np.repeat(mu[j], n))**2) / n)**0.5 for j in range(self.dim) ]
+			# The inverse CDF of the normal distribution (do not place it in loop, hungry process)
+			ICDF = norm.ppf(pobs)
 
 			def neg_log_likelihood(rho):
 				S = np.identity(self.dim)
-				S[0][1] = rho[0]
-				S[1][0] = rho[0]
+				
+				# We place rho values in the up and down triangular part of the covariance matrix
+				for i in range(self.dim - 1):
+					for j in range(i + 1,  self.dim):
+						S[i][j] = rho[i * (self.dim - 1) + j - 1]
+						S[self.dim - i - 1][self.dim - j - 1] = S[i][j]
+				
+				# Computation of det and invert matrix
 				if self.dim == 2:
 					sigmaDet = S[0][0] * S[1][1] - rho**2
 					sigmaInv = 1. / sigmaDet * np.asarray([[ S[1][1], -rho], [ -rho, S[0][0] ]])
@@ -435,8 +443,7 @@ class GaussianCopula(Copula):
 					sigmaDet = np.linalg.det(S)
 					sigmaInv = np.linalg.inv(S)
 				
-				# The inverse CDF of the normal distribution (do not place it in loop, hungry process)
-				ICDF = norm.ppf(pobs)
+				# Log-likelihood
 				lh = 0
 				
 				for i in range(n):
@@ -444,17 +451,22 @@ class GaussianCopula(Copula):
 					lh += np.log(cDens)
 
 				return -lh
-				#return sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i)))
 
-			rho_start = 0.0
+			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
 			res = minimize(neg_log_likelihood, rho_start, method = 'Nelder-Mead')	
 			print(res)
-			# TODO : Find nearest definite positive matrix
-			rho = res['x'][0]
+			rho = res['x']
+			
 			self.sigma = np.identity(self.dim)
-			self.sigma[0][1] = rho
-			self.sigma[1][0] = rho
-			self.setCovariance(self.sigma)
+			# We extract rho values to covariance matrix
+			for i in range(self.dim - 1):
+				for j in range(i + 1,  self.dim):
+					self.sigma[i][j] = rho[i * (self.dim - 1) + j - 1]
+					self.sigma[self.dim - i - 1][self.dim - j - 1] = self.sigma[i][j]
+			
+		# We compute the nearest semi-definite positive matrix for the covariance matrix
+		self.sigma = math_misc.nearPD(self.sigma)
+		self.setCovariance(self.sigma)
 
 #class StudentCopula(Copula):
 
