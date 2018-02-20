@@ -9,6 +9,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 from matplotlib import cm
 
+from pycopula.visualization import pdf_2d,  cdf_2d
+
 data = pd.read_csv("mydata.csv").values[:,1:]
 #plt.figure()
 #plt.scatter(data[:,0], data[:,1], marker="x")
@@ -23,10 +25,10 @@ gaussian = GaussianCopula(dim=2)
 clayton.fit(data, method='cml')
 gaussian.fit(data)
 
-u, v, Carchi = clayton.pdf_2d()
-u, v, Cindep = indep.cdf_2d()
-u, v, Cgauss = gaussian.cdf_2d()
-u, v, cgauss = gaussian.pdf_2d(zclip=5)
+u, v, carchi = pdf_2d(clayton, zclip=5)
+u, v, Cindep = cdf_2d(indep)
+u, v, Cgauss = cdf_2d(gaussian)
+u, v, cgauss = pdf_2d(gaussian, zclip=5)
 
 #sys.exit()
 print(clayton)
@@ -46,11 +48,12 @@ ax.plot_wireframe(X, Y, Cgauss, color='black', alpha=0.3)
 ax = fig.add_subplot(122, projection='3d', title="Gaussian copula PDF")
 X, Y = np.meshgrid(u, v)
 
-#c[c>5]= np.nan
 ax.set_zlim(0, 5)
-#ax.set_zlim(0, 8)
-
 ax.plot_surface(X, Y, cgauss, cmap=cm.Blues)
 ax.plot_wireframe(X, Y, cgauss, color='black', alpha=0.3)
+
+ax = fig.add_subplot(122, title="Gaussian copula PDF")
+
+ax.contour(X, Y, cgauss,  levels = np.arange(0,5,0.15))
 
 plt.show()

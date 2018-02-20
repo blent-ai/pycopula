@@ -8,7 +8,7 @@
 __author__ = "Maxime Jumelle"
 __copyright__ = "Copyright 2018, AIPCloud"
 __credits__ = "Maxime Jumelle"
-__license__ = "GPL"
+__license__ = "Apache 2.0"
 __version__ = "0.1.0"
 __maintainer__ = "Maxime Jumelle"
 __email__ = "maxime@aipcloud.io"
@@ -89,42 +89,12 @@ class Copula():
 		elif self.name == 'frechet_down':
 			return max(sum(x) - self.dim + 1., 0)
 
-	def cdf_2d(self, step=40):
-		u = np.linspace(1e-4, 1.-1e-4, num=step)
-		v = np.linspace(1e-4, 1.-1e-4, num=step)
-		C = []
-
-		for i in range(len(u)):
-			row = []
-			for j in range(len(v)):
-				row.append(self.cdf([ u[i], v[j] ]))
-			C.append(row)
-
-		return u, v, np.asarray(C)
-
 	def pdf(self, x):
 		self._checkDimension(x)
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
 			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
-
-	def pdf_2d(self, step=40, zclip=5):
-		u = np.linspace(1e-4, 1.-1e-4, num=step)
-		v = np.linspace(1e-4, 1.-1e-4, num=step)
-		C = []
-
-		for i in range(len(u)):
-			row = []
-			for j in range(len(v)):
-				z = self.pdf([ u[i], v[j] ])
-				if z > zclip:
-					z = zclip
-				row.append(z)
-			C.append(row)
-
-		return u, v, np.asarray(C)
-		
 
 class ArchimedeanCopula(Copula):
 
@@ -385,7 +355,7 @@ class GaussianCopula(Copula):
 		Parameters
 		----------
 		sigma : numpy array (of size copula dimensions * copula dimension)
-			The definite positive covariance matrix.
+			The definite positive covariance matrix. Note that you should check yourself if the matrix is definite positive.
 		"""
 		S = np.asarray(sigma)
 		if len(S.shape) > 2:
@@ -468,5 +438,7 @@ class GaussianCopula(Copula):
 		self.sigma = math_misc.nearPD(self.sigma)
 		self.setCovariance(self.sigma)
 
-#class StudentCopula(Copula):
+class StudentCopula(Copula):
 
+	def __init__(self, dim=2):
+		super(StudentCopula, self).__init__()
