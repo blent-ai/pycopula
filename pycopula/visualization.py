@@ -47,6 +47,29 @@ def cdf_2d(copula, step=40):
 
 	return u, v, np.asarray(C)
 
-def concentrationFunction(copula, step=50):
-	u = np.linspace(1e-4, 1.-1e-4, num=step)
-	#def fUpper(x):
+def concentrationFunction(X, step=50):
+	data = np.asarray(X)
+	(n, d) = data.shape
+	downI = np.linspace(1e-4, 0.5, num=step)
+	upI = np.linspace(0.5, 1.-1e-4, num=step)
+	# Pseudo-observations from real data X
+	pobs = []
+	for i in range(d):
+		order = data[:, i].argsort()
+		ranks = order.argsort()
+		u_i = [ (r + 1) / (n + 1) for r in ranks ]
+		pobs.append(u_i)
+		
+	def down(x):
+		un = [ 1 for i in range(n) if pobs[0][i] <= x]
+		if len(un) > 0:
+			return sum([ 1 for i in range(n) if pobs[0][i] <= x and pobs[1][i] <= x]) / sum(un)
+		return 0
+
+	def up(x):
+		un = [ 1 for i in range(n) if pobs[0][i] >= 1.-x]
+		if len(un) > 0:
+			return sum([ 1 for i in range(n) if pobs[0][i] >= 1.-x and pobs[1][i] >= 1.-x]) / sum(un)
+		return 0
+
+	return downI, upI, [ down(p) for p in downI ], [ up(p) for p in downI[::-1] ]

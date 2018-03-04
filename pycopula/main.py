@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 from matplotlib import cm
 
-from pycopula.visualization import pdf_2d, cdf_2d
+from pycopula.visualization import pdf_2d, cdf_2d, concentrationFunction
 from pycopula.simulation import simulate
 
 data = pd.read_csv("mydata.csv").values[:,1:]
@@ -66,4 +66,18 @@ plt.scatter([ s[0] for s in sim ], [s[1] for s in sim ])
 plt.title("Simulation of 1000 points with Gaussian copula")
 plt.xlim(0, 1)
 plt.ylim(0, 1)
+
+downI, upI, tailDown, tailUp = concentrationFunction(sim)
+GaussDown = [ gaussian.concentrationDown(x) for x in downI ]
+GaussUp = [ gaussian.concentrationUp(x) for x in upI ]
+
+plt.figure()
+plt.plot(downI, tailDown, color='red', linewidth=3, label="Empirical concentration")
+plt.plot(upI, tailUp, color='red', linewidth=3)
+plt.plot(downI, GaussDown, color='blue', linewidth=1, label="Gaussian concentration")
+plt.plot(upI, GaussUp, color='blue', linewidth=1)
+plt.plot([0.5, 0.5], [0, 1], color='gray', alpha=0.6, linestyle='--', linewidth=1)
+plt.title("Lower-Upper tail dependence Coefficients")
+plt.xlabel("Lower Tail      Upper Tail")
+plt.legend(loc=0)
 plt.show()

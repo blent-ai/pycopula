@@ -22,6 +22,8 @@ In the future, I plan to release the following features :
 
 ![Screenshot](resources/clayton_pdf_cdf.png)
 
+![Screenshot](resources/lower_upper_tail.png)
+
 ### Estimation
 
 ### Simulation

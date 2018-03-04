@@ -10,12 +10,10 @@ def simulate(copula, n):
 	
 	# We get correlation matrix from covariance matrix
 	Sigma = copula.getCovariance()
-	print(np.diag(np.diag(Sigma)))
 	D = sqrtm(np.diag(np.diag(Sigma)))
 	Dinv = inv(D)
 	P = np.dot(np.dot(Dinv, Sigma), Dinv)
 	A = cholesky(P)
-	print(A)
 	X = []
 	
 	for i in range(n):

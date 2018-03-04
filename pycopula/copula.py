@@ -98,7 +98,13 @@ class Copula():
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
 			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
-
+			
+	def concentrationDown(self, x):
+		return self.cdf([x, x]) / x
+		
+	def concentrationUp(self, x):
+		return (1. - 2*x + self.cdf([x, x])) / (1. - x)
+		
 class ArchimedeanCopula(Copula):
 
 	families = [ 'clayton', 'gumbel', 'frank', 'joe', 'amh' ]
