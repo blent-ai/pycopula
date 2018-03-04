@@ -16,7 +16,7 @@ __status__ = "Development"
 
 import numpy as np
 
-def pdf_2d(copula,  step=40, zclip=None):
+def pdf_2d(copula, step=40, zclip=None):
 	if zclip <= 0:
 		raise ValueError("The z-clip value must be strictly greater than 0.")
 	u = np.linspace(1e-4, 1.-1e-4, num=step)
@@ -34,7 +34,7 @@ def pdf_2d(copula,  step=40, zclip=None):
 
 	return u, v, np.asarray(C)
 	
-def cdf_2d(copula,  step=40):
+def cdf_2d(copula, step=40):
 	u = np.linspace(1e-4, 1.-1e-4, num=step)
 	v = np.linspace(1e-4, 1.-1e-4, num=step)
 	C = []
@@ -46,4 +46,7 @@ def cdf_2d(copula,  step=40):
 		C.append(row)
 
 	return u, v, np.asarray(C)
-	
+
+def concentrationFunction(copula, step=50):
+	u = np.linspace(1e-4, 1.-1e-4, num=step)
+	#def fUpper(x):

@@ -20,8 +20,10 @@ In the future, I plan to release the following features :
 
 ### Visualization
 
-![Screenshot](resources/gaussian_pdf_cdf.png)
+![Screenshot](resources/clayton_pdf_cdf.png)
 
 ### Estimation
 
 ### Simulation
+
+![Screenshot](resources/simulation_gaussian.png)

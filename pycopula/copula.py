@@ -45,6 +45,9 @@ class Copula():
 	def _checkDimension(self, x):
 		if len(x) != self.dim:
 			raise ValueError("Expected vector of dimension {0}, get vector of dimension {1}".format(self.dim, len(x)))
+			
+	def getDimension(self):
+		return self.dim
 
 	def correlations(self, X):
 		"""
@@ -341,7 +344,7 @@ class ArchimedeanCopula(Copula):
 class GaussianCopula(Copula):
 
 	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):
-		super(GaussianCopula, self).__init__()
+		super(GaussianCopula, self).__init__(dim=dim)
 		self.setCovariance(sigma)
 
 	def cdf(self, x):
@@ -369,11 +372,17 @@ class GaussianCopula(Copula):
 		self.sigma = S
 		self.sigmaDet = np.linalg.det(S)
 		self.sigmaInv = np.linalg.inv(S)
+		
+	def getCovariance(self):
+		return self.sigma
 
 	def pdf(self, x):
 		self._checkDimension(x)
 		u_i = norm.ppf(x)
 		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
+		
+	def quantile(self,  x):
+		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.sigma)
 
 	def fit(self, X, method='cml', verbose=True):
 		print("Fitting Gaussian copula.")
@@ -441,4 +450,8 @@ class GaussianCopula(Copula):
 class StudentCopula(Copula):
 
 	def __init__(self, dim=2):
-		super(StudentCopula, self).__init__()
+		super(StudentCopula, self).__init__(dim=dim)
+		
+	def cdf(self, x):
+		self._checkDimension(x)
+		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.sigma)
