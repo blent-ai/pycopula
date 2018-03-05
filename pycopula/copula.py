@@ -23,8 +23,6 @@ import math_misc
 
 from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
 from scipy.optimize import minimize
-from scipy.misc import factorial
-import statsmodels.api as sm
 import numpy as np
 
 # An abstract copula object
@@ -109,7 +107,7 @@ class ArchimedeanCopula(Copula):
 
 	families = [ 'clayton', 'gumbel', 'frank', 'joe', 'amh' ]
 
-	def __init__(self, family='clayton', generator=None, dim=2):
+	def __init__(self, family='clayton', dim=2):
 		super(ArchimedeanCopula, self).__init__(dim=dim)
 		self.family = family
 		self.parameter = 2.0
@@ -129,13 +127,24 @@ class ArchimedeanCopula(Copula):
 			self.parameter = 0.5
 			self.generator = generators.aliMikhailHaqGenerator
 			self.generatorInvert = generators.aliMikhailHaqGeneratorInvert
-		else:
-			if generator == None:
-				raise ValueError("The generator is needed for custom archimedean copula.")
-		
 
 	def __str__(self):
 		return "Archimedean Copula ({0}) :".format(self.family) + "\n*\tParameter : {:1.6f}".format(self.parameter)
+		
+	def generator(self, x):
+		return self.generator(x, self.parameter)
+		
+	def inverseGenerator(self, x):
+		return self.generatorInvert(x, self.parameter)
+		
+	def getParameter(self):
+		return self.parameter
+		
+	def setParameter(self, theta):
+		self.parameter = theta
+		
+	def getFamily(self):
+		return self.family
 
 	def _checkDimension(self, x):
 		"""

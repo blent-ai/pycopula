@@ -50,8 +50,8 @@ def cdf_2d(copula, step=40):
 def concentrationFunction(X, step=50):
 	data = np.asarray(X)
 	(n, d) = data.shape
-	downI = np.linspace(1e-4, 0.5, num=step)
-	upI = np.linspace(0.5, 1.-1e-4, num=step)
+	downI = np.linspace(0.05+1e-4, 0.5, num=step)
+	upI = np.linspace(0.5, 0.95-1e-4, num=step)
 	# Pseudo-observations from real data X
 	pobs = []
 	for i in range(d):
