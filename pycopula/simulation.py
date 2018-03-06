@@ -27,7 +27,9 @@ def simulate(copula, n):
 		
 		# Laplace–Stieltjes invert transform
 		LSinv = { 'clayton' : lambda theta: np.random.gamma(shape=1./theta), 
-				'gumbel' : lambda theta: stats.levy_stable.rvs(1./theta, 1., 0, math.cos(math.pi / (2 * theta))**theta) }
+				'gumbel' : lambda theta: stats.levy_stable.rvs(1./theta, 1., 0, math.cos(math.pi / (2 * theta))**theta), 
+				'frank' : lambda theta: stats.logser.rvs(1. - math.exp(-theta)), 
+				'amh' : lambda theta: stats.geom.rvs(theta)}
 
 		for i in range(n):
 			V = LSinv[copula.getFamily()](copula.getParameter())

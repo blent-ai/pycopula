@@ -19,11 +19,11 @@ data = pd.read_csv("mydata.csv").values[:,1:]
 #print(data.shape[1])
 #print(data)
 
-clayton = ArchimedeanCopula(family="gumbel", dim=2)
+clayton = ArchimedeanCopula(family="amh", dim=2)
 indep = Copula(dim=2, name='frechet_up')
 gaussian = GaussianCopula(dim=2)
 
-clayton.fit(data, method='cml')
+#clayton.fit(data, method='cml')
 gaussian.fit(data)
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
@@ -58,7 +58,7 @@ ax = fig.add_subplot(122, title="Clayton copula PDF")
 ax.contour(X, Y, carchi, levels = np.arange(0,5,0.15))
 
 gaussian.setCovariance([[1, 0.8], [0.8, 1]])
-clayton.setParameter(1.8)
+clayton.setParameter(0.85)
 sim = simulate(clayton, 3000)
 
 fig = plt.figure()

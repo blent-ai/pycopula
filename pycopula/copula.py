@@ -250,11 +250,11 @@ class ArchimedeanCopula(Copula):
 		elif self.family == 'amh':
 			if self.dim == 2:
 				for i in range(self.dim):
-					prod *= (theta - 1.) / (theta * (x[i] - 1.) * x[i] + x[i])
+					prod *= (theta - 1.) / (x[i] * (1. - theta * (1. - x[i])))
 					sumInvert += self.generator(x[i], theta)
 
 				def amhInvertDerivative(t, theta, order):
-					return (1. - theta) * (2. * np.exp(2. * t) / (np.exp(t) - theta)**3 - np.exp(t) / (np.exp(t) - theta)**2)
+					return (1. - theta) * np.exp(t) * (theta + np.exp(t)) / (np.exp(t) - theta)**3
 
 				invertNDerivative = amhInvertDerivative
 			# Fix for n dimension	
@@ -461,12 +461,3 @@ class GaussianCopula(Copula):
 		# We compute the nearest semi-definite positive matrix for the covariance matrix
 		self.sigma = math_misc.nearPD(self.sigma)
 		self.setCovariance(self.sigma)
-
-class StudentCopula(Copula):
-
-	def __init__(self, dim=2):
-		super(StudentCopula, self).__init__(dim=dim)
-		
-	def cdf(self, x):
-		self._checkDimension(x)
-		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.sigma)
