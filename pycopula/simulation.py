@@ -2,6 +2,7 @@ import numpy as np
 import scipy.stats as stats
 from scipy.linalg import sqrtm
 from numpy.linalg import inv, cholesky
+from scipy.stats import multivariate_normal, invgamma, t as student
 import math
 
 # Only for normal copula
@@ -34,6 +35,16 @@ def simulate(copula, n):
 		for i in range(n):
 			V = LSinv[copula.getFamily()](copula.getParameter())
 			X_i = [ copula.inverseGenerator(-np.log(u) / V) for u in U[i, :] ]
+			X.append(X_i)
+	elif type(copula).__name__ == "StudentCopula":
+		nu = copula.getFreedomDegrees()
+		Sigma = copula.getCovariance()
+
+		for i in range(n):
+			Z = multivariate_normal.rvs(size=1, cov=Sigma)
+			W = invgamma.rvs(nu / 2., size=1)
+			U = np.sqrt(W) * Z
+			X_i = [ student.cdf(u, nu) for u in U ]
 			X.append(X_i)
 
 	return X

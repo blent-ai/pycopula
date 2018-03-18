@@ -21,6 +21,7 @@ data = pd.read_csv("mydata.csv").values[:,1:]
 
 clayton = ArchimedeanCopula(family="amh", dim=2)
 indep = Copula(dim=2, name='frechet_up')
+student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
 #clayton.fit(data, method='cml')
@@ -30,7 +31,8 @@ u, v, carchi = pdf_2d(clayton, zclip=5)
 u, v, Carchi = cdf_2d(clayton)
 u, v, Cgauss = cdf_2d(gaussian)
 u, v, cgauss = pdf_2d(gaussian, zclip=5)
-
+u, v, Cstudent = cdf_2d(student)
+print(Cstudent)
 #sys.exit()
 print(clayton)
 print(indep)
@@ -43,8 +45,8 @@ X, Y = np.meshgrid(u, v)
 ax.set_zlim(0, 1)
 #ax.set_zlim(0, 8)
 
-ax.plot_surface(X, Y, Carchi, cmap=cm.Blues)
-ax.plot_wireframe(X, Y, Carchi, color='black', alpha=0.3)
+ax.plot_surface(X, Y, Cstudent, cmap=cm.Blues)
+ax.plot_wireframe(X, Y, Cstudent, color='black', alpha=0.3)
 
 ax = fig.add_subplot(122, projection='3d', title="Clayton copula PDF")
 X, Y = np.meshgrid(u, v)
@@ -55,22 +57,22 @@ ax.plot_wireframe(X, Y, cgauss, color='black', alpha=0.3)
 
 ax = fig.add_subplot(122, title="Clayton copula PDF")
 
-ax.contour(X, Y, carchi, levels = np.arange(0,5,0.15))
+ax.contour(X, Y, cgauss, levels = np.arange(0,5,0.15))
 
 gaussian.setCovariance([[1, 0.8], [0.8, 1]])
 clayton.setParameter(0.85)
-sim = simulate(clayton, 3000)
+sim = simulate(student, 3000)
 
 fig = plt.figure()
-plt.contour(X, Y, carchi, levels = np.arange(0,5,0.15), alpha=0.4)
-plt.scatter([ s[0] for s in sim ], [s[1] for s in sim ])
+#plt.contour(X, Y, cgauss, levels = np.arange(0,5,0.15), alpha=0.4)
+plt.scatter([ s[0] for s in sim ], [s[1] for s in sim ], alpha=0.4, edgecolors='none')
 plt.title("Simulation of 1000 points with Clayton copula")
 plt.xlim(0, 1)
 plt.ylim(0, 1)
 
 downI, upI, tailDown, tailUp = concentrationFunction(sim)
-ClaytonDown = [ clayton.concentrationDown(x) for x in downI ]
-ClaytonUp = [ clayton.concentrationUp(x) for x in upI ]
+ClaytonDown = [ gaussian.concentrationDown(x) for x in downI ]
+ClaytonUp = [ gaussian.concentrationUp(x) for x in upI ]
 
 plt.figure()
 plt.plot(downI, tailDown, color='red', linewidth=3, label="Empirical concentration")

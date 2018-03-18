@@ -20,7 +20,9 @@ sys.path.insert(0, '..')
 
 import archimedean_generators as generators
 import math_misc
+from math_misc import multivariate_t_distribution
 
+import scipy
 from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
 from scipy.optimize import minimize
 import numpy as np
@@ -43,8 +45,11 @@ class Copula():
 	def _checkDimension(self, x):
 		if len(x) != self.dim:
 			raise ValueError("Expected vector of dimension {0}, get vector of dimension {1}".format(self.dim, len(x)))
-			
+	
 	def getDimension(self):
+		"""
+		Returns the dimension of the copula.
+		"""
 		return self.dim
 
 	def correlations(self, X):
@@ -58,11 +63,11 @@ class Copula():
 
 		Returns
 		-------
-		float
+		kendall : float
 			The Kendall tau.
-		float
+		pearson : float
 			The Pearson's R
-		float
+		spearman : float
 			The Spearman's R
 		"""
 		if self.dim != 2:
@@ -73,6 +78,14 @@ class Copula():
 		return self.kendall, self.pearson, self.spearman
 
 	def kendall(self):
+		"""
+		Compute the correlations of the specified data. Only available when dimension of copula is 2.
+
+		Parameters
+		----------
+		X : numpy array (of size n * 2)
+			Values to compute correlations.
+		"""
 		return self.kendall
 
 	def pearson(self):
@@ -354,8 +367,7 @@ class ArchimedeanCopula(Copula):
 			self.parameter = res['x'][0]
 
 		return self.parameter
-
-
+		
 class GaussianCopula(Copula):
 
 	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):
@@ -461,3 +473,46 @@ class GaussianCopula(Copula):
 		# We compute the nearest semi-definite positive matrix for the covariance matrix
 		self.sigma = math_misc.nearPD(self.sigma)
 		self.setCovariance(self.sigma)
+
+class StudentCopula(Copula):
+	
+	def __init__(self, dim=2, df=1, sigma=[[1, 0.6], [0.6, 1]]):
+		super(StudentCopula, self).__init__(dim=dim)
+		self.df = df
+		self.sigma = sigma
+		
+	def getFreedomDegrees(self):
+		return self.df
+		
+	def setFreedomDegrees(self, df):
+		if df <= 0:
+			raise ValueError("The degrees of freedom must be strictly greater than 0.")
+		self.df = df
+		
+	def setCovariance(self, sigma):
+		"""
+		Set the covariance of the copula.
+
+		Parameters
+		----------
+		sigma : numpy array (of size copula dimensions * copula dimension)
+			The definite positive covariance matrix. Note that you should check yourself if the matrix is definite positive.
+		"""
+		S = np.asarray(sigma)
+		if len(S.shape) > 2:
+			raise ValueError("2-dimensional array expected, get {0}-dimensional array.".format(len(S.shape)))
+		if S.shape[0] != S.shape[1]:
+			raise ValueError("Covariance matrix must be a squared matrix of dimension {0}".format(self.dim))
+		if len([ 1 for i in range(S.shape[0]) if S[i, i] <= 0]) > 0:
+			raise ValueError("Null or negative variance encountered in covariance matrix.")
+		if not(np.array_equal(np.transpose(S), S)):
+			raise ValueError("Covariance matrix is not symmetric.")
+		self.sigma = S
+		
+	def getCovariance(self):
+		return self.sigma
+		
+	def cdf(self, x):
+		self._checkDimension(x)
+		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
+		return multivariate_t_distribution(tv, 0, self.sigma, self.df, self.dim)
