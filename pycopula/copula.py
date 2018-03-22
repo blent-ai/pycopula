@@ -25,12 +25,26 @@ from math_misc import multivariate_t_distribution
 import scipy
 from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
 from scipy.optimize import minimize
+from scipy.linalg import sqrtm
+import scipy.misc
+
 import numpy as np
+from numpy.linalg import inv
 
 # An abstract copula object
 class Copula():
 
 	def __init__(self, dim=2, name='indep'):
+		"""
+		Creates a new abstract Copula.
+		
+		Parameters
+		----------
+		dim : integer (greater than 1)
+			The dimension of the copula.
+		name : string
+			Default copula. 'indep' is for independency copula, 'frechet_up' the upper Fréchet-Hoeffding bound and 'frechet_down' the lower Fréchet-Hoeffding bound.
+		"""
 		if dim < 2 or int(dim) != dim:
 			raise ValueError("Copula dimension must be an integer greater than 1.")
 		self.dim = dim
@@ -79,22 +93,37 @@ class Copula():
 
 	def kendall(self):
 		"""
-		Compute the correlations of the specified data. Only available when dimension of copula is 2.
-
-		Parameters
-		----------
-		X : numpy array (of size n * 2)
-			Values to compute correlations.
+		Returns the Kendall's tau. Note that you should previously have computed correlations.
 		"""
+		if self.kendall == None:
+			raise ValueError("You must compute correlations before accessing to Kendall's tau.")
 		return self.kendall
 
 	def pearson(self):
+		"""
+		Returns the Pearson's r. Note that you should previously have computed correlations.
+		"""
+		if self.pearson == None:
+			raise ValueError("You must compute correlations before accessing to Pearson's r.")
 		return self.pearson
 
 	def spearman(self):
+		"""
+		Returns the Spearman's rho. Note that you should previously have computed correlations.
+		"""
+		if self.pearson == None:
+			raise ValueError("You must compute correlations before accessing to Spearman's rho.")
 		return self.spearman	
 
 	def cdf(self, x):
+		"""
+		Returns the cumulative distribution function (CDF) of the copula.
+		
+		Parameters
+		----------
+		x : numpy array (of size d)
+			Values to compute CDF.
+		"""
 		self._checkDimension(x)
 		if self.name == 'indep':
 			return np.prod(x)
@@ -104,6 +133,14 @@ class Copula():
 			return max(sum(x) - self.dim + 1., 0)
 
 	def pdf(self, x):
+		"""
+		Returns the probability distribution function (PDF) of the copula.
+		
+		Parameters
+		----------
+		x : numpy array (of size d)
+			Values to compute PDF.
+		"""
 		self._checkDimension(x)
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
@@ -111,10 +148,42 @@ class Copula():
 			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
 			
 	def concentrationDown(self, x):
+		"""
+		Returns the theoritical lower concentration function.
+		
+		Parameters
+		----------
+		x : float (between 0 and 0.5)
+		"""
+		if x > 0.5 or x < 0:
+			raise ValueError("The argument must be included between 0 and 0.5.")
 		return self.cdf([x, x]) / x
 		
 	def concentrationUp(self, x):
+		"""
+		Returns the theoritical upper concentration function.
+		
+		Parameters
+		----------
+		x : float (between 0.5 and 1)
+		"""
+		if x < 0.5 or x > 1:
+			raise ValueError("The argument must be included between 0.5 and 1.")
 		return (1. - 2*x + self.cdf([x, x])) / (1. - x)
+		
+	def concentrationFunction(self, x):
+		"""
+		Returns the theoritical concentration function.
+		
+		Parameters
+		----------
+		x : float (between 0 and 1)
+		"""
+		if x < 0 or x > 1:
+			raise ValueError("The argument must be included between 0 and 1.")
+		if x < 0.5:
+			return self.concentrationDown(x)
+		return self.concentrationUp(x)
 		
 class ArchimedeanCopula(Copula):
 
@@ -140,6 +209,8 @@ class ArchimedeanCopula(Copula):
 			self.parameter = 0.5
 			self.generator = generators.aliMikhailHaqGenerator
 			self.generatorInvert = generators.aliMikhailHaqGeneratorInvert
+		else:
+			raise ValueError("The family name '{0}' is not defined.".format(family))
 
 	def __str__(self):
 		return "Archimedean Copula ({0}) :".format(self.family) + "\n*\tParameter : {:1.6f}".format(self.parameter)
@@ -180,7 +251,6 @@ class ArchimedeanCopula(Copula):
 		float
 			The CDF value on x.
 		"""
-		# TODO : Gérer le cas où le générateur inverse n'est pas défini
 		self._checkDimension(x)
 		return self.generatorInvert(sum([ self.generator(v, self.parameter) for v in x ]), self.parameter)
 
@@ -200,7 +270,6 @@ class ArchimedeanCopula(Copula):
 		float
 			The PDF value on x.
 		"""
-		# TODO : gérer la n-ième dérivée de la réciproque de phi
 		self._checkDimension(x)
 		# prod is the product of the derivatives of the generator for each variable
 		prod = 1
@@ -233,9 +302,11 @@ class ArchimedeanCopula(Copula):
 
 				def gumbelInvertDerivative(t, theta, order):
 					return 1. / theta**2 * t**(1. / theta - 2.) * (theta + t**(1. / theta) - 1.) * np.exp(-t**(1. / theta))
-
-				invertNDerivative = gumbelInvertDerivative
-			# Fix for n dimension
+				
+				if self.dim == 2:
+					invertNDerivative = gumbelInvertDerivative
+				
+				
 		elif self.family == 'frank':
 			if self.dim == 2:
 				for i in range(self.dim):
@@ -245,9 +316,9 @@ class ArchimedeanCopula(Copula):
 				def frankInvertDerivative(t, theta, order):
 					C = np.exp(-theta) - 1.
 					return - C / theta * np.exp(t) / (C + np.exp(t))**2
-
+					
 				invertNDerivative = frankInvertDerivative
-			# Fix for n dimension
+				
 		elif self.family == 'joe':
 			if self.dim == 2:
 				for i in range(self.dim):
@@ -258,8 +329,7 @@ class ArchimedeanCopula(Copula):
 					return 1. / theta**2 * (1. - np.exp(-t))**(1. / theta) * (theta * np.exp(t) - 1.) / (np.exp(t) - 1.)**2
 
 				invertNDerivative = joeInvertDerivative
-			# Fix for n dimension
-		# Need some work on AMH
+				
 		elif self.family == 'amh':
 			if self.dim == 2:
 				for i in range(self.dim):
@@ -270,31 +340,21 @@ class ArchimedeanCopula(Copula):
 					return (1. - theta) * np.exp(t) * (theta + np.exp(t)) / (np.exp(t) - theta)**3
 
 				invertNDerivative = amhInvertDerivative
-			# Fix for n dimension	
-
-		# TODO : Implement numerical derivative of the invert
+				
 		if invertNDerivative == None:
-			raise Exception("The {0}-th derivative of the invert of the generator is not defined.".format(self.dim))
+			try:
+				invertNDerivative = lambda t, theta, order: scipy.misc.derivative(lambda x: self.generatorInvert(x, theta), t, n=order, order=order+order%2+1)
+			except:
+				raise Exception("The {0}-th derivative of the invert of the generator could not be computed.".format(self.dim))
+		
 		# We compute the PDF of the copula
 		return prod * invertNDerivative(sumInvert, theta, self.dim)
 
 	def pdf(self, x):
-		"""
-		Returns de PDF of the copula.
 
-		Parameters
-		----------
-		x : numpy array (of size copula dimension)
-			Values where PDF value is computed.
-
-		Returns
-		-------
-		float
-			The PDF value on x.
-		"""
 		return self.pdf_param(x, self.parameter)
 
-	def fit(self, X, method='cml', verbose=False, thetaBounds=None):
+	def fit(self, X, method='cmle', verbose=False, thetaBounds=None):
 		"""
 		Fit the archimedean copula with specified data.
 
@@ -303,7 +363,7 @@ class ArchimedeanCopula(Copula):
 		X : numpy array (of size n * copula dimension)
 			The data to fit.
 		method : str
-			The estimation method to use. Default is cml.
+			The estimation method to use. Default is 'cmle'.
 		verbose : bool
 			Output various informations during fitting process.
 		thetaBounds : tuple
@@ -332,7 +392,7 @@ class ArchimedeanCopula(Copula):
 			
 
 		# Canonical Maximum Likelihood Estimation
-		elif method == 'cml':
+		elif method == 'cmle':
 			# Pseudo-observations from real data X
 			pobs = []
 			for i in range(self.dim):
@@ -411,7 +471,7 @@ class GaussianCopula(Copula):
 	def quantile(self,  x):
 		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.sigma)
 
-	def fit(self, X, method='cml', verbose=True):
+	def fit(self, X, method='cmle', verbose=True):
 		print("Fitting Gaussian copula.")
 		n = X.shape[0]
 		if n < 1:
@@ -419,7 +479,7 @@ class GaussianCopula(Copula):
 		self._checkDimension(X[0,:])
 
 		# Canonical Maximum Likelihood Estimation
-		if method == 'cml':
+		if method == 'cmle':
 			# Pseudo-observations from real data X
 			pobs = []
 			for i in range(self.dim):
@@ -515,4 +575,22 @@ class StudentCopula(Copula):
 	def cdf(self, x):
 		self._checkDimension(x)
 		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
-		return multivariate_t_distribution(tv, 0, self.sigma, self.df, self.dim)
+		print(tv)
+		def fun(a, b):
+			return multivariate_t_distribution(np.asarray([a, b]), np.asarray([0, 0]), self.sigma, self.df, self.dim)
+			
+		lim_0 = lambda x: -10
+		lim_1 = lambda x: tv[1]
+		return scipy.integrate.dblquad(fun, -10, tv[0], lim_0, lim_1)[0]
+		
+	def pdf(self, x):
+		self._checkDimension(x)
+		D = sqrtm(np.diag(np.diag(self.sigma)))
+		Dinv = inv(D)
+		P = np.dot(np.dot(Dinv, self.sigma), Dinv)
+		
+		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
+		prod = 1
+		for i in range(self.dim):
+			prod *= scipy.stats.t.pdf(tv[i], df=self.df)
+		return multivariate_t_distribution(tv, 0, P, self.df, self.dim) / prod

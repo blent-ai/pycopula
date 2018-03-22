@@ -46,3 +46,18 @@ def multivariate_t_distribution(x,mu,Sigma,df,d):
     Denom = ( gamma(1.*df/2) * pow(df*pi,1.*d/2) * pow(np.linalg.det(Sigma),1./2) * pow(1 + (1./df)*np.dot(np.dot((x - mu),np.linalg.inv(Sigma)), (x - mu)),1.* (d+df)/2))
     d = 1. * Num / Denom 
     return d
+
+def derivativeOf(fun, x, order):
+	import scipy.special
+	import scipy.misc
+	h = 1e-8
+	res = 0
+	res = sum([ (-1)**(k+1) * scipy.special.binom(order, k) * fun(x + k * h) for k in range(order+1) ])
+	return scipy.misc.derivative(fun, 2, n=order, order=order+order%2+1)
+	return res / h**order
+	
+if __name__ == '__main__':
+	def myFun(x):
+		return x**3 - 2*x + 4
+		
+	print(derivativeOf(myFun, 2, 4))

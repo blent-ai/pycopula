@@ -8,18 +8,13 @@ Welcome to PyCopula's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-.. automodule:: copula
- 
-.. autoclass:: Copula
-    :members:
-
-.. autoclass:: ArchimedeanCopula
-    :members:
-
-.. autoclass:: GaussianCopula
-    :members:
+   intro
+   install
+   copulas
+   estimation
+   visual
+   simulation
 
 Indices and tables
 ==================

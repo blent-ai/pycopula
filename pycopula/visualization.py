@@ -17,6 +17,8 @@ __status__ = "Development"
 import numpy as np
 
 def pdf_2d(copula, step=40, zclip=None):
+	if zclip == None:
+		zclip = 5
 	if zclip <= 0:
 		raise ValueError("The z-clip value must be strictly greater than 0.")
 	u = np.linspace(1e-4, 1.-1e-4, num=step)

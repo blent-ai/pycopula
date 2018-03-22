@@ -5,9 +5,9 @@ PyCopula is an easy-to-use Python library that allows you to study random variab
 
 Currently, there are only a few features implemented in the library, which are the basics components for copula handling :
 
-- Creating Archimedean and Gaussian copulas
+- Creating Archimedean, Gaussian and Student copulas
 - 3D plot of PDF and CDF
-- Estimation of archimedean copulas parameter (Canonical Maximum Likelihood)
+- Estimation of copulas parameters (CMLE)
 
 In the future, I plan to release the following features :
 
