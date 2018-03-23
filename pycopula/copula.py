@@ -351,10 +351,9 @@ class ArchimedeanCopula(Copula):
 		return prod * invertNDerivative(sumInvert, theta, self.dim)
 
 	def pdf(self, x):
-
 		return self.pdf_param(x, self.parameter)
 
-	def fit(self, X, method='cmle', verbose=False, thetaBounds=None):
+	def fit(self, X, method='cmle', verbose=False, thetaBounds=None, **kwargs):
 		"""
 		Fit the archimedean copula with specified data.
 
@@ -511,7 +510,6 @@ class GaussianCopula(Copula):
 				
 				# Log-likelihood
 				lh = 0
-				
 				for i in range(n):
 					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(ICDF[i,  :], np.dot(sigmaInv - np.identity(self.dim), ICDF[i,  :])))
 					lh += np.log(cDens)
@@ -581,7 +579,8 @@ class StudentCopula(Copula):
 			
 		lim_0 = lambda x: -10
 		lim_1 = lambda x: tv[1]
-		return scipy.integrate.dblquad(fun, -10, tv[0], lim_0, lim_1)[0]
+		return fun(x[0], x[1])
+		#return scipy.integrate.dblquad(fun, -10, tv[0], lim_0, lim_1)[0]
 		
 	def pdf(self, x):
 		self._checkDimension(x)

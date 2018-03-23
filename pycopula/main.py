@@ -24,7 +24,7 @@ indep = Copula(dim=2, name='frechet_up')
 student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
-#clayton.fit(data, method='cml')
+#clayton.fit(data, method='cmle')
 gaussian.fit(data)
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
