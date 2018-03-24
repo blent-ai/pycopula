@@ -24,12 +24,22 @@ indep = Copula(dim=2, name='frechet_up')
 student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
-clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [1.2], [1.2] ])
+clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
 #gaussian.fit(data)
 print(clayton)
 #print(gaussian)
 sys.exit()
 
+clayton = ArchimedeanCopula(family="clayton", dim=2)
+boundAlpha = [0, None] # Greater than 0
+boundGamma = [0, None]
+bounds = [ boundAlpha, boundGamma ]
+paramX1 = [None, 1.2] # Hyper-parameters of first Gamma
+paramX2 = [1.8, None] # Hyper-parameters of second Gamma
+hyperParams = [ paramX1, paramX2 ] # The hyper-parameters
+gamma = scipy.stats.gamma # The Gamma distribution
+# Fitting copula with MLE method and Gamma marginals distributions
+clayton.fit(data, method='mle', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
 u, v, Carchi = cdf_2d(clayton)

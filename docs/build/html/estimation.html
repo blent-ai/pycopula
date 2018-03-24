@@ -1,0 +1,387 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Estimation &mdash; PyCopula 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Copula" href="copula.html" /> 
+  <link href="https://fonts.googleapis.com/css?family=Overpass+Mono:300,400,600,700|Overpass:100,100i,200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&subset=latin-ext" rel="stylesheet">
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> PyCopula
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+	<div style="width: 95%;position: absolute;bottom: 0;left: 0;">
+		<center>
+			<a href="http://aipcloud.io" target="_blank">
+				<img src="_static/aipcloud_logo.png" style="width: 80px;height: auto:" />
+				<p style="margin-top: 15px;margin-bottom: 0px;font-size: 1.8rem;font-family: 'Overpass', serif;font-weight: 800;color: #ecb144;">AIPCloud</p>
+			</a>
+			<p style="margin-top: 5px;color: rgba(255, 255, 255, 0.8);font-size: 0.8rem; width: 80%;">
+			Official documentation of PyCopula. Pease visit <a href="" target="_blank" style="color: #ecb144;">GitHub</a> for more details.
+			</p>
+		</center>
+	</div>
+	<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+		<a href="https://github.com/AIPCloud/PyCopula" target="_blank">
+			<span class="rst-current-version" data-toggle="rst-current-version">
+      				<span class="fa fa-book" style="color: #ecb144;"> AIPCloud GitHub</span>
+			</span>
+		</a>
+	</div>
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="copula.html">Copula</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="copula.html#archimedean-copulas">Archimedean Copulas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="copula.html#gaussian-copulas">Gaussian Copulas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="copula.html#student-copulas">Student Copulas</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Estimation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-estimation">Maximum Likelihood Estimation (MLE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inference-for-margins-ifm">Inference For Margins (IFM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-estimation">Canonical Maximum Likelihood Estimation (CMLE)</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyCopula</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Estimation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/estimation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="estimation">
+<h1>Estimation<a class="headerlink" href="#estimation" title="Permalink to this headline">¶</a></h1>
+<p>Our goal is to estimate the parameter <span class="math">\(\theta\)</span> of a copula, where <span class="math">\(X_1, ..., X_d\)</span> are random variables associated to the marginals. We denote <span class="math">\(F_1, ..., F_d\)</span> the cumulative distribution functions (CDF) and <span class="math">\(f_1, ..., f_d\)</span> the probability density functions (PDF), if it exists, of those random variables. Most of estimation methods involve likelihood function <span class="math">\(L\)</span>, that we can easily get using the expression of copula’s density <span class="math">\(c\)</span> :</p>
+<div class="math">
+\[L(x_1, ..., x_d) = c(F_1(x_1), ..., F_d(x_d)) \prod_{i=1}^d f_i(x_i)\]</div>
+<p>To fit the copulas, we use a dataset <span class="math">\(\mathbf{x}=\left \{(x_{i1}, ..., x_{id}) \right \}_{1 \leq i \leq n}\)</span> and the log-likelihood function will refer to <span class="math">\(\mathcal{L}(\mathbf{x}_i)=\log L(\mathbf{x}_i)\)</span>.</p>
+<div class="section" id="module-estimation">
+<span id="maximum-likelihood-estimation-mle"></span><h2>Maximum Likelihood Estimation (MLE)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="estimation.mle">
+<code class="descclassname">estimation.</code><code class="descname">mle</code><span class="sig-paren">(</span><em>copula</em>, <em>X</em>, <em>marginals</em>, <em>hyper_param</em>, <em>hyper_param_start=None</em>, <em>hyper_param_bounds=None</em>, <em>theta_start=0</em>, <em>theta_bounds=None</em>, <em>optimize_method='Nelder-Mead'</em>, <em>bounded_optimize_method='SLSQP'</em><span class="sig-paren">)</span><a class="headerlink" href="#estimation.mle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the MLE on specified data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>copula</strong> : Copula</p>
+<blockquote>
+<div><p>The copula.</p>
+</div></blockquote>
+<p><strong>X</strong> : numpy array (of size n * copula dimension)</p>
+<blockquote>
+<div><p>The data to fit.</p>
+</div></blockquote>
+<p><strong>marginals</strong> : numpy array</p>
+<blockquote>
+<div><p>The marginals distributions. Use scipy.stats distributions or equivalent that requires pdf and cdf functions according to rv_continuous class from scipy.stat.</p>
+</div></blockquote>
+<p><strong>hyper_param</strong> : numpy array</p>
+<blockquote>
+<div><p>The hyper-parameters for each marginal distribution. Use None when the hyper-parameter is unknow and must be estimated.</p>
+</div></blockquote>
+<p><strong>hyper_param_start</strong> : numpy array</p>
+<blockquote>
+<div><p>The start value of hyper-parameters during optimization. Must be same dimension of hyper_param.</p>
+</div></blockquote>
+<p><strong>hyper_param_bounds</strong> : numpy array</p>
+<blockquote>
+<div><p>Allowed values for each hyper-parameter.</p>
+</div></blockquote>
+<p><strong>theta_start</strong> : float</p>
+<blockquote>
+<div><p>Initial value of theta in optimization algorithm.</p>
+</div></blockquote>
+<p><strong>theta_bounds</strong> : couple</p>
+<blockquote>
+<div><p>Allowed values of theta.</p>
+</div></blockquote>
+<p><strong>optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization when no theta_bounds was specified.</p>
+</div></blockquote>
+<p><strong>bounded_optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization under constraints</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">OptimizeResult</p>
+<blockquote class="last">
+<div><p>The optimization result returned from SciPy.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>The MLE objective is to maximize the log-likelihood function over all parameters and hyper-parameters of marginals. We suppose that <span class="math">\(X_j \sim f(\beta_j)\)</span> where <span class="math">\(\beta_j\)</span> is an hyper-parameter of the copula. The MLE will then return the copula’s parameter and all estimated hyper-parameters at the same time. The estimated parameters <span class="math">\(\hat{\theta}, \hat{\beta}_1, ..., \hat{\beta}_d\)</span> are solution to the following optimization problem.</p>
+<div class="math">
+\[\max_{\theta, \beta_1, ..., \beta_n} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}\]</div>
+<p>For instance, suppose that we would like to fit a copula thanks to MLE method where <span class="math">\(X_1 \sim Gamma(\alpha, 1.2)\)</span> and <span class="math">\(X_2 \sim Gamma(1.8, \gamma)\)</span> with <span class="math">\(\alpha &gt; 0\)</span> and <span class="math">\(\gamma &gt; 0\)</span>. Then we would write the following code :</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">mle</span><span class="p">(</span><span class="n">copula</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span> <span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="p">],</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>Here is a detailled example on how to fit a Clayton copula with MLE.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">clayton</span> <span class="o">=</span> <span class="n">ArchimedeanCopula</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="s2">&quot;clayton&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+     <span class="n">boundAlpha</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="c1"># Greater than 0</span>
+<span class="hll">     <span class="n">boundGamma</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+</span>     <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span> <span class="n">boundAlpha</span><span class="p">,</span> <span class="n">boundGamma</span> <span class="p">]</span>
+<span class="hll">     <span class="n">paramX1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]</span> <span class="c1"># Hyper-parameters of first Gamma</span>
+</span>     <span class="n">paramX2</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="c1"># Hyper-parameters of second Gamma</span>
+     <span class="n">hyperParams</span> <span class="o">=</span> <span class="p">[</span> <span class="n">paramX1</span><span class="p">,</span> <span class="n">paramX2</span> <span class="p">]</span> <span class="c1"># The hyper-parameters</span>
+     <span class="n">gamma</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span> <span class="c1"># The Gamma distribution</span>
+     <span class="c1"># Fitting copula with MLE method and Gamma marginals distributions</span>
+     <span class="n">clayton</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="n">hyperParams</span><span class="p">,</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Keep in mind that, in case where there are many hyper-parameters, the computational cost can be extremely high.</p>
+</div>
+<div class="section" id="inference-for-margins-ifm">
+<h2>Inference For Margins (IFM)<a class="headerlink" href="#inference-for-margins-ifm" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-estimation">
+<span id="canonical-maximum-likelihood-estimation-cmle"></span><h2>Canonical Maximum Likelihood Estimation (CMLE)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="estimation.cmle">
+<code class="descclassname">estimation.</code><code class="descname">cmle</code><span class="sig-paren">(</span><em>log_lh</em>, <em>theta_start=0</em>, <em>theta_bounds=None</em>, <em>optimize_method='Nelder-Mead'</em>, <em>bounded_optimize_method='SLSQP'</em><span class="sig-paren">)</span><a class="headerlink" href="#estimation.cmle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the CMLE on a specified log-likelihood function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>log_lh</strong> : Function</p>
+<blockquote>
+<div><p>The log-likelihood.</p>
+</div></blockquote>
+<p><strong>theta_start</strong> : float</p>
+<blockquote>
+<div><p>Initial value of theta in optimization algorithm.</p>
+</div></blockquote>
+<p><strong>theta_bounds</strong> : couple</p>
+<blockquote>
+<div><p>Allowed values of theta.</p>
+</div></blockquote>
+<p><strong>optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization when no theta_bounds was specified.</p>
+</div></blockquote>
+<p><strong>bounded_optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization under constraints</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">OptimizeResult</p>
+<blockquote class="last">
+<div><p>The optimization result returned from SciPy.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="copula.html" class="btn btn-neutral" title="Copula" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Maxime Jumelle.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="_static/mathjax_conf.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,1 +1,0 @@
-Search.setIndex({docnames:["index"],envversion:53,filenames:["index.rst"],objects:{},objnames:{},objtypes:{},terms:{document:0,offici:0,pycopula:0},titles:["&lt;no title&gt;"],titleterms:{}})
