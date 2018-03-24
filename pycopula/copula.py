@@ -21,10 +21,10 @@ sys.path.insert(0, '..')
 import archimedean_generators as generators
 import math_misc
 from math_misc import multivariate_t_distribution
+import estimation
 
 import scipy
 from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
-from scipy.optimize import minimize
 from scipy.linalg import sqrtm
 import scipy.misc
 
@@ -243,16 +243,20 @@ class ArchimedeanCopula(Copula):
 
 		Parameters
 		----------
-		x : numpy array (of size copula dimension)
-			Values where CDF value is computed.
+		x : numpy array (of size copula dimension or n * copula dimension)
+			Quantiles.
 
 		Returns
 		-------
 		float
 			The CDF value on x.
 		"""
-		self._checkDimension(x)
-		return self.generatorInvert(sum([ self.generator(v, self.parameter) for v in x ]), self.parameter)
+		if len(np.asarray(x).shape) > 1:
+			self._checkDimension(x[0])
+			return [ self.generatorInvert(sum([ self.generator(v, self.parameter) for v in row ]), self.parameter) for row in x ]
+		else:
+			self._checkDimension(x)
+			return self.generatorInvert(sum([ self.generator(v, self.parameter) for v in x ]), self.parameter)
 
 	def pdf_param(self, x, theta):
 		"""
@@ -260,8 +264,8 @@ class ArchimedeanCopula(Copula):
 
 		Parameters
 		----------
-		x : numpy array (of size copula dimension)
-			Values where PDF value is computed.
+		x : numpy array (of size n * copula dimension)
+			Quantiles.
 		theta : float
 			The custom parameter.
 
@@ -353,7 +357,7 @@ class ArchimedeanCopula(Copula):
 	def pdf(self, x):
 		return self.pdf_param(x, self.parameter)
 
-	def fit(self, X, method='cmle', verbose=False, thetaBounds=None, **kwargs):
+	def fit(self, X, method='cmle', verbose=False, theta_bounds=None, **kwargs):
 		"""
 		Fit the archimedean copula with specified data.
 
@@ -365,8 +369,10 @@ class ArchimedeanCopula(Copula):
 			The estimation method to use. Default is 'cmle'.
 		verbose : bool
 			Output various informations during fitting process.
-		thetaBounds : tuple
+		theta_bounds : tuple
 			Definition set of theta. Use this only with custom family.
+		**kwargs
+			Arguments of method. See estimation for more details.
 
 		Returns
 		-------
@@ -402,33 +408,53 @@ class ArchimedeanCopula(Copula):
 
 			pobs = np.transpose(np.asarray(pobs))
 
-			bounds = thetaBounds
+			bounds = theta_bounds
 			if bounds == None:
 				if self.family == 'amh':
 					bounds = (-1, 1 - 1e-6)
 				elif self.family == 'clayton':
 					bounds = (-1, None)
 				elif self.family in ['gumbel', 'joe'] :
+
 					bounds = (1, None)
 
-			def neg_log_likelihood(theta):
-				return -sum([ np.log(self.pdf_param(pobs[i,:], theta)) for i in range(n) ])
+			def log_likelihood(theta):
+				return sum([ np.log(self.pdf_param(pobs[i,:], theta)) for i in range(n) ])
 
 			theta_start = np.array(2.)
 			if self.family == 'amh':
 				theta_start = np.array(0.5)
 
-			if bounds != None:
-				res = minimize(neg_log_likelihood, theta_start, method = 'SLSQP', bounds=[bounds])
-			else:
-				res = minimize(neg_log_likelihood, theta_start, method = 'Nelder-Mead')	
-	
+			res = estimation.cmle(log_likelihood, theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
+			self.parameter = res['x'][0]
+		
+		# Maximum Likelihood Estimation
+		elif method == 'mle':
+			if not('marginals' in kwargs):
+				raise ValueError("Marginals distribution are required for MLE.")
+			if not('hyper_param' in kwargs):
+				raise ValueError("Hyper-parameters are required for MLE.")
+			
+			bounds = theta_bounds
+			if bounds == None:
+				if self.family == 'amh':
+					bounds = (-1, 1 - 1e-6)
+				elif self.family == 'clayton':
+					bounds = (-1, None)
+				elif self.family in ['gumbel', 'joe'] :
+
+					bounds = (1, None)
+
+			theta_start = np.array(2.)
+			if self.family == 'amh':
+				theta_start = np.array(0.5)
+				
+			res = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			self.parameter = res['x'][0]
 
 		return self.parameter
 		
 class GaussianCopula(Copula):
-
 	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):
 		super(GaussianCopula, self).__init__(dim=dim)
 		self.setCovariance(sigma)
@@ -467,10 +493,40 @@ class GaussianCopula(Copula):
 		u_i = norm.ppf(x)
 		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
 		
+	def pdf_param(self, x, sigma):
+		self._checkDimension(x)
+		u_i = norm.ppf(x)
+		if self.dim == 2:
+			sigmaDet = sigma[0][0] * sigma[1][1] - sigma[0][1]**2
+			sigmaInv = 1. / sigmaDet * np.asarray([[ sigma[1][1], -sigma[0][1]], [ -sigma[0][1], sigma[0][0] ]])
+		else:
+			sigmaDet = np.linalg.det(sigma)
+			sigmaInv = np.linalg.inv(sigma)
+		return sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i)))
+		
 	def quantile(self,  x):
 		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.sigma)
 
-	def fit(self, X, method='cmle', verbose=True):
+	def fit(self, X, method='cmle', verbose=True, **kwargs):
+		"""
+		Fit the Gaussian copula with specified data.
+
+		Parameters
+		----------
+		X : numpy array (of size n * copula dimension)
+			The data to fit.
+		method : str
+			The estimation method to use. Default is 'cmle'.
+		verbose : bool
+			Output various informations during fitting process.
+		**kwargs
+			Arguments of method. See estimation for more details.
+
+		Returns
+		-------
+		float
+			The estimated parameters of the Gaussian copula.
+		"""
 		print("Fitting Gaussian copula.")
 		n = X.shape[0]
 		if n < 1:
@@ -491,7 +547,7 @@ class GaussianCopula(Copula):
 			# The inverse CDF of the normal distribution (do not place it in loop, hungry process)
 			ICDF = norm.ppf(pobs)
 
-			def neg_log_likelihood(rho):
+			def log_likelihood(rho):
 				S = np.identity(self.dim)
 				
 				# We place rho values in the up and down triangular part of the covariance matrix
@@ -514,11 +570,10 @@ class GaussianCopula(Copula):
 					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(ICDF[i,  :], np.dot(sigmaInv - np.identity(self.dim), ICDF[i,  :])))
 					lh += np.log(cDens)
 
-				return -lh
+				return lh
 
 			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
-			res = minimize(neg_log_likelihood, rho_start, method = 'Nelder-Mead')	
-			print(res)
+			res = estimation.cmle(log_likelihood, theta_start=rho_start, theta_bounds=None, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			rho = res['x']
 			
 			self.sigma = np.identity(self.dim)

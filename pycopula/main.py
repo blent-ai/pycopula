@@ -19,13 +19,17 @@ data = pd.read_csv("mydata.csv").values[:,1:]
 #print(data.shape[1])
 #print(data)
 
-clayton = ArchimedeanCopula(family="amh", dim=2)
+clayton = ArchimedeanCopula(family="clayton", dim=2)
 indep = Copula(dim=2, name='frechet_up')
 student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
-#clayton.fit(data, method='cmle')
-gaussian.fit(data)
+clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [1.2], [1.2] ])
+#gaussian.fit(data)
+print(clayton)
+#print(gaussian)
+sys.exit()
+
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
 u, v, Carchi = cdf_2d(clayton)
@@ -34,7 +38,7 @@ u, v, cgauss = pdf_2d(gaussian, zclip=5)
 u, v, Cstudent = cdf_2d(student)
 u, v, cstudent = pdf_2d(student)
 #sys.exit()
-print(clayton)
+
 print(indep)
 
 fig = plt.figure()
