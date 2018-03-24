@@ -108,7 +108,7 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Estimation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-estimation">Maximum Likelihood Estimation (MLE)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#inference-for-margins-ifm">Inference For Margins (IFM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inference-functions-for-margins-ifm">Inference Functions for Margins (IFM)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-estimation">Canonical Maximum Likelihood Estimation (CMLE)</a></li>
 </ul>
 </li>
@@ -234,9 +234,13 @@
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">OptimizeResult</p>
-<blockquote class="last">
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>optimizeResult</strong> : OptimizeResult</p>
+<blockquote>
 <div><p>The optimization result returned from SciPy.</p>
+</div></blockquote>
+<p><strong>estimatedHyperParams</strong> : numpy array</p>
+<blockquote class="last">
+<div><p>The estimated hyper-parameters</p>
 </div></blockquote>
 </td>
 </tr>
@@ -246,12 +250,12 @@
 
 <p>The MLE objective is to maximize the log-likelihood function over all parameters and hyper-parameters of marginals. We suppose that <span class="math">\(X_j \sim f(\beta_j)\)</span> where <span class="math">\(\beta_j\)</span> is an hyper-parameter of the copula. The MLE will then return the copula’s parameter and all estimated hyper-parameters at the same time. The estimated parameters <span class="math">\(\hat{\theta}, \hat{\beta}_1, ..., \hat{\beta}_d\)</span> are solution to the following optimization problem.</p>
 <div class="math">
-\[\max_{\theta, \beta_1, ..., \beta_n} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}\]</div>
+\[\max_{\theta, \beta_1, ..., \beta_d} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}\]</div>
 <p>For instance, suppose that we would like to fit a copula thanks to MLE method where <span class="math">\(X_1 \sim Gamma(\alpha, 1.2)\)</span> and <span class="math">\(X_2 \sim Gamma(1.8, \gamma)\)</span> with <span class="math">\(\alpha &gt; 0\)</span> and <span class="math">\(\gamma &gt; 0\)</span>. Then we would write the following code :</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">mle</span><span class="p">(</span><span class="n">copula</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span> <span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="p">],</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]])</span>
 </pre></div>
 </div>
-<p>Here is a detailled example on how to fit a Clayton copula with MLE.</p>
+<p>Use None to consider an hyper-parameter as unknown and None to define <span class="math">\(\pm \infty\)</span> in hyper-parameters bounds. Here is a detailled example on how to fit a Clayton copula with MLE.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">clayton</span> <span class="o">=</span> <span class="n">ArchimedeanCopula</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="s2">&quot;clayton&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
      <span class="n">boundAlpha</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="c1"># Greater than 0</span>
 <span class="hll">     <span class="n">boundGamma</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
@@ -266,8 +270,8 @@
 </div>
 <p>Keep in mind that, in case where there are many hyper-parameters, the computational cost can be extremely high.</p>
 </div>
-<div class="section" id="inference-for-margins-ifm">
-<h2>Inference For Margins (IFM)<a class="headerlink" href="#inference-for-margins-ifm" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="inference-functions-for-margins-ifm">
+<h2>Inference Functions for Margins (IFM)<a class="headerlink" href="#inference-functions-for-margins-ifm" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-estimation">
 <span id="canonical-maximum-likelihood-estimation-cmle"></span><h2>Canonical Maximum Likelihood Estimation (CMLE)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
@@ -311,6 +315,16 @@
 </table>
 </dd></dl>
 
+<p>This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF <span class="math">\(\hat{F}_j\)</span> for each random variable is computed and observations <span class="math">\(\mathbf{x}\)</span> are transformed into uniform data <span class="math">\(\mathbf{u}\)</span>.</p>
+<div class="math">
+\[\forall 1 \leq i \leq n, \forall 1 \leq j \leq d, u_{ij}=\hat{F}_j(x_{ij})\]</div>
+<p>Estimating the parameter of the copula is then applied maximizing log-likelihood on transformed data.</p>
+<div class="math">
+\[\hat{\theta} = \text{argmax}_{\theta} \sum_{i=1}^n \log c(u_{i1}, ..., u_{id}, \theta)\]</div>
+<p>Since CMLE does not require marginal distributions, using this method is quite easy. For instance, on the Clayton copula :</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">clayton</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;cmle&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 

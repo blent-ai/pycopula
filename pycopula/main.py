@@ -24,9 +24,15 @@ indep = Copula(dim=2, name='frechet_up')
 student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
-clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
+opti, params = clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
 #gaussian.fit(data)
 print(clayton)
+print(params)
+
+opti, params = clayton.fit(data, method='ifm', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
+print(clayton)
+print(params)
+
 #print(gaussian)
 sys.exit()
 
@@ -39,7 +45,7 @@ paramX2 = [1.8, None] # Hyper-parameters of second Gamma
 hyperParams = [ paramX1, paramX2 ] # The hyper-parameters
 gamma = scipy.stats.gamma # The Gamma distribution
 # Fitting copula with MLE method and Gamma marginals distributions
-clayton.fit(data, method='mle', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
+clayton.fit(data, method='ifm', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
 u, v, Carchi = cdf_2d(clayton)

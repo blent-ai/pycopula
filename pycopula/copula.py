@@ -378,12 +378,16 @@ class ArchimedeanCopula(Copula):
 		-------
 		float
 			The estimated parameter of the archimedean copula.
+		estimationData
+			Various data from estimation method. Often estimated hyper-parameters.
+		
 		"""
 		n = X.shape[0]
 		if n < 1:
 			raise ValueError("At least two values are needed to fit the copula.")
 		self._checkDimension(X[0,:])
-
+		estimationData = None
+		
 		# Moments method (only when dimension = 2)
 		if method == 'moments':
 			if self.kendall == None:
@@ -395,7 +399,7 @@ class ArchimedeanCopula(Copula):
 			else:
 				raise Exception("Moments estimation is not available for this copula.")
 			
-
+			
 		# Canonical Maximum Likelihood Estimation
 		elif method == 'cmle':
 			# Pseudo-observations from real data X
@@ -428,8 +432,8 @@ class ArchimedeanCopula(Copula):
 			res = estimation.cmle(log_likelihood, theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			self.parameter = res['x'][0]
 		
-		# Maximum Likelihood Estimation
-		elif method == 'mle':
+		# Maximum Likelihood Estimation and Inference Functions for Margins
+		elif method in [ 'mle', 'ifm' ]:
 			if not('marginals' in kwargs):
 				raise ValueError("Marginals distribution are required for MLE.")
 			if not('hyper_param' in kwargs):
@@ -442,17 +446,20 @@ class ArchimedeanCopula(Copula):
 				elif self.family == 'clayton':
 					bounds = (-1, None)
 				elif self.family in ['gumbel', 'joe'] :
-
 					bounds = (1, None)
 
 			theta_start = np.array(2.)
 			if self.family == 'amh':
 				theta_start = np.array(0.5)
+			
+			if method == 'mle':
+				res, estimationData = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
+			else:
+				res, estimationData = estimation.ifm(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 				
-			res = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			self.parameter = res['x'][0]
-
-		return self.parameter
+			
+		return self.parameter, estimationData
 		
 class GaussianCopula(Copula):
 	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):

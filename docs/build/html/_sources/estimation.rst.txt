@@ -15,7 +15,7 @@ Maximum Likelihood Estimation (MLE)
 The MLE objective is to maximize the log-likelihood function over all parameters and hyper-parameters of marginals. We suppose that :math:`X_j \sim f(\beta_j)` where :math:`\beta_j` is an hyper-parameter of the copula. The MLE will then return the copula's parameter and all estimated hyper-parameters at the same time. The estimated parameters :math:`\hat{\theta}, \hat{\beta}_1, ..., \hat{\beta}_d` are solution to the following optimization problem.
 
 .. math::
-	\max_{\theta, \beta_1, ..., \beta_n} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}
+	\max_{\theta, \beta_1, ..., \beta_d} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}
 
 
 
@@ -26,7 +26,7 @@ For instance, suppose that we would like to fit a copula thanks to MLE method wh
 
 	mle(copula, X, marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
 
-Here is a detailled example on how to fit a Clayton copula with MLE.
+Use None to consider an hyper-parameter as unknown and None to define :math:`\pm \infty` in hyper-parameters bounds. Here is a detailled example on how to fit a Clayton copula with MLE.
 
 .. code-block:: python
    :emphasize-lines: 3,5
@@ -44,11 +44,28 @@ Here is a detailled example on how to fit a Clayton copula with MLE.
 
 Keep in mind that, in case where there are many hyper-parameters, the computational cost can be extremely high.
 
-Inference For Margins (IFM)
+Inference Functions for Margins (IFM)
 ----------------------------
 
 Canonical Maximum Likelihood Estimation (CMLE)
 -----------------------------------------------
 .. automodule:: estimation
 	:members: cmle
+
+This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF :math:`\hat{F}_j` for each random variable is computed and observations :math:`\mathbf{x}` are transformed into uniform data :math:`\mathbf{u}`.
+
+.. math::
+	\forall 1 \leq i \leq n, \forall 1 \leq j \leq d, u_{ij}=\hat{F}_j(x_{ij})
+
+Estimating the parameter of the copula is then applied maximizing log-likelihood on transformed data.
+
+.. math::
+	\hat{\theta} = \text{argmax}_{\theta} \sum_{i=1}^n \log c(u_{i1}, ..., u_{id}, \theta)
+
+Since CMLE does not require marginal distributions, using this method is quite easy. For instance, on the Clayton copula :
+
+.. code-block:: python
+   :emphasize-lines: 3,5
+
+	clayton.fit(data, method='cmle')
 

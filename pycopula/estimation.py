@@ -56,8 +56,10 @@ def mle(copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_b
 		
 	Returns
 	-------
-	OptimizeResult
+	optimizeResult : OptimizeResult
 		The optimization result returned from SciPy.
+	estimatedHyperParams : numpy array
+		The estimated hyper-parameters
 	"""	
 	hyperParams = np.asarray(hyper_param)
 	hyperStart = np.asarray(hyper_param_start)
@@ -95,16 +97,64 @@ def mle(copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_b
 		lh += sum([ sum(np.log(marginals[j].pdf(np.transpose(X)[j], v[j + 1]))) for j in range(d) ])
 		return lh
 	
+	optimizeResult = None
 	if hyper_param_bounds == None:
 		if theta_bounds == None:
-			return minimize(lambda x: -log_lh(x), start_vector, method = optimize_method)
+			optimizeResult = minimize(lambda x: -log_lh(x), start_vector, method = optimize_method)
 		else:
 			optiBounds = np.vstack((np.array([theta_bounds]), np.tile(np.array([None, None]), [d, 1]) ))
-			return minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
+			optimizeResult = minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
 	else:
 		if theta_bounds == None:
 			optiBounds = np.vstack((np.array([None, None]), np.tile(np.array([None, None]), [d, 1]) ))
-			return minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
+			optimizeResult = minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
 		else:
 			optiBounds = np.vstack((np.array([theta_bounds]), hyper_param_bounds))
-			return minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
+			optimizeResult = minimize(lambda x: -log_lh(x), start_vector, method = bounded_optimize_method, bounds=optiBounds)
+	
+	estimatedHyperParams = hyperParams
+	idx = 1
+	for k in range(len(hyperParams)):
+		for l in range(len(hyperParams[k])):
+			if estimatedHyperParams[k][l] == None:
+				estimatedHyperParams[k][l] = optimizeResult['x'][idx]
+				idx += 1
+	return optimizeResult, estimatedHyperParams
+	
+def ifm(copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_bounds=None, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'):
+	hyperParams = np.asarray(hyper_param)
+	hyperStart = np.asarray(hyper_param_start)
+	n, d = X.shape
+	hyperEstimated = np.repeat(0, d)
+	pobs = np.zeros((d, n)) # Pseudo-observations
+	
+	# Estimation of each hyper-parameter
+	for j in range(d):
+		start = []
+		for k in range(len(hyperParams)):
+			for l in range(len(hyperParams[k])):
+				if hyper_param_start != None and hyperParams[k][l] != None:
+					start_vector.append(hyperStart[k][l])
+		
+		def uni_log_likelihood(x):
+			return sum(np.log(marginals[j].pdf(np.transpose(X)[j], x)))
+			
+		if hyper_param_bounds[j] == None:
+			hyperEstimated[j] = minimize(lambda x: -uni_log_likelihood(x), start, method = optimize_method)
+		else:
+			hyperEstimated[j] = minimize(lambda x: -uni_log_likelihood(x), start, method = bounded_optimize_method, bounds=hyper_param_bounds[j])
+			
+		pobs[j] = marginals[j].cdf(np.transpose(X)[j], hyperEstimated[j])
+		
+	pobs = np.transpose(pobs)
+	optimizeResult = None
+	
+	def log_likelihood(x):
+		return sum([ np.log(copula.pdf_param(pobs[i], x)) for i in range(n) ])
+		
+	if theta_bounds == None:
+		optimizeResult = minimize(lambda x: -log_likelihood(x), theta_start, method = optimize_method)
+	else:
+		optimizeResult = minimize(lambda x: -log_likelihood(x), theta_start, method = bounded_optimize_method, bounds=theta_bounds)
+		
+	return optimizeResult, hyperEstimated
