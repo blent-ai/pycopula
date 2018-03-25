@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Simulation" href="simulation.html" />
     <link rel="prev" title="Copula" href="copula.html" /> 
   <link href="https://fonts.googleapis.com/css?family=Overpass+Mono:300,400,600,700|Overpass:100,100i,200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&subset=latin-ext" rel="stylesheet">
   
@@ -81,7 +82,7 @@
 				<p style="margin-top: 15px;margin-bottom: 0px;font-size: 1.8rem;font-family: 'Overpass', serif;font-weight: 800;color: #ecb144;">AIPCloud</p>
 			</a>
 			<p style="margin-top: 5px;color: rgba(255, 255, 255, 0.8);font-size: 0.8rem; width: 80%;">
-			Official documentation of PyCopula. Pease visit <a href="" target="_blank" style="color: #ecb144;">GitHub</a> for more details.
+			Official documentation of PyCopula. Please visit <a href="" target="_blank" style="color: #ecb144;">GitHub</a> for more details.
 			</p>
 		</center>
 	</div>
@@ -100,6 +101,7 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="copula.html">Copula</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="copula.html#archimedean-copulas">Archimedean Copulas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="copula.html#gaussian-copulas">Gaussian Copulas</a></li>
@@ -108,10 +110,12 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Estimation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-estimation">Maximum Likelihood Estimation (MLE)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#inference-functions-for-margins-ifm">Inference Functions for Margins (IFM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-estimation">Inference Functions for Margins (IFM)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-estimation">Canonical Maximum Likelihood Estimation (CMLE)</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
 </ul>
 
             
@@ -251,27 +255,105 @@
 <p>The MLE objective is to maximize the log-likelihood function over all parameters and hyper-parameters of marginals. We suppose that <span class="math">\(X_j \sim f(\beta_j)\)</span> where <span class="math">\(\beta_j\)</span> is an hyper-parameter of the copula. The MLE will then return the copula’s parameter and all estimated hyper-parameters at the same time. The estimated parameters <span class="math">\(\hat{\theta}, \hat{\beta}_1, ..., \hat{\beta}_d\)</span> are solution to the following optimization problem.</p>
 <div class="math">
 \[\max_{\theta, \beta_1, ..., \beta_d} \sum_{i=1}^n \left \{ \log c(F_1(x_{i1}, \beta_1), ..., F_d(x_{id}, \beta_d)) + \sum_{j=1}^d \log f(x_{ij}, \beta_j) \right \}\]</div>
-<p>For instance, suppose that we would like to fit a copula thanks to MLE method where <span class="math">\(X_1 \sim Gamma(\alpha, 1.2)\)</span> and <span class="math">\(X_2 \sim Gamma(1.8, \gamma)\)</span> with <span class="math">\(\alpha &gt; 0\)</span> and <span class="math">\(\gamma &gt; 0\)</span>. Then we would write the following code :</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">mle</span><span class="p">(</span><span class="n">copula</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span> <span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="p">],</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]])</span>
+<p>For instance, suppose that we would like to fit a copula thanks to MLE method where <span class="math">\(X_1 \sim Gamma(\alpha, 1.2)\)</span> and <span class="math">\(X_2 \sim Exp(\lambda)\)</span> with <span class="math">\(\alpha &gt; 0\)</span> and <span class="math">\(\lambda &gt; 0\)</span>. Then we would write the following code :</p>
+<div class="highlight-pythons"><div class="highlight"><pre><span></span>     mle(copula, X, marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { &#39;a&#39;: None, &#39;scale&#39;: 1.2 }, { &#39;scale&#39;: None } ], hyper_param_bounds=[ [0, None], [0, None]])
 </pre></div>
 </div>
 <p>Use None to consider an hyper-parameter as unknown and None to define <span class="math">\(\pm \infty\)</span> in hyper-parameters bounds. Here is a detailled example on how to fit a Clayton copula with MLE.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">clayton</span> <span class="o">=</span> <span class="n">ArchimedeanCopula</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="s2">&quot;clayton&quot;</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
      <span class="n">boundAlpha</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="c1"># Greater than 0</span>
-<span class="hll">     <span class="n">boundGamma</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
-</span>     <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span> <span class="n">boundAlpha</span><span class="p">,</span> <span class="n">boundGamma</span> <span class="p">]</span>
-<span class="hll">     <span class="n">paramX1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">]</span> <span class="c1"># Hyper-parameters of first Gamma</span>
-</span>     <span class="n">paramX2</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span> <span class="c1"># Hyper-parameters of second Gamma</span>
+<span class="hll">     <span class="n">boundLambda</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">]</span>
+</span>     <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span> <span class="n">boundAlpha</span><span class="p">,</span> <span class="n">boundLambda</span> <span class="p">]</span>
+<span class="hll">     <span class="n">paramX1</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="mf">1.2</span> <span class="p">}</span> <span class="c1"># Hyper-parameters of Gamma</span>
+</span>     <span class="n">paramX2</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="bp">None</span> <span class="p">}</span> <span class="c1"># Hyper-parameters of Exp</span>
      <span class="n">hyperParams</span> <span class="o">=</span> <span class="p">[</span> <span class="n">paramX1</span><span class="p">,</span> <span class="n">paramX2</span> <span class="p">]</span> <span class="c1"># The hyper-parameters</span>
      <span class="n">gamma</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">gamma</span> <span class="c1"># The Gamma distribution</span>
-     <span class="c1"># Fitting copula with MLE method and Gamma marginals distributions</span>
-     <span class="n">clayton</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span><span class="n">gamma</span><span class="p">,</span> <span class="n">gamma</span><span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="n">hyperParams</span><span class="p">,</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+     <span class="n">expon</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">expon</span> <span class="c1"># The Exponential distribution</span>
+     <span class="c1"># Fitting copula with MLE method and Gamma/Exp marginals distributions</span>
+     <span class="n">clayton</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mle&#39;</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span><span class="n">gamma</span><span class="p">,</span> <span class="n">exp</span><span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="n">hyperParams</span><span class="p">,</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Keep in mind that, in case where there are many hyper-parameters, the computational cost can be extremely high.</p>
 </div>
-<div class="section" id="inference-functions-for-margins-ifm">
-<h2>Inference Functions for Margins (IFM)<a class="headerlink" href="#inference-functions-for-margins-ifm" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-estimation">
+<span id="inference-functions-for-margins-ifm"></span><h2>Inference Functions for Margins (IFM)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="estimation.ifm">
+<code class="descclassname">estimation.</code><code class="descname">ifm</code><span class="sig-paren">(</span><em>copula</em>, <em>X</em>, <em>marginals</em>, <em>hyper_param</em>, <em>hyper_param_start=None</em>, <em>hyper_param_bounds=None</em>, <em>theta_start=0</em>, <em>theta_bounds=None</em>, <em>optimize_method='Nelder-Mead'</em>, <em>bounded_optimize_method='SLSQP'</em><span class="sig-paren">)</span><a class="headerlink" href="#estimation.ifm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the IFM estimation on specified data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>copula</strong> : Copula</p>
+<blockquote>
+<div><p>The copula.</p>
+</div></blockquote>
+<p><strong>X</strong> : numpy array (of size n * copula dimension)</p>
+<blockquote>
+<div><p>The data to fit.</p>
+</div></blockquote>
+<p><strong>marginals</strong> : numpy array</p>
+<blockquote>
+<div><p>The marginals distributions. Use scipy.stats distributions or equivalent that requires pdf and cdf functions according to rv_continuous class from scipy.stat.</p>
+</div></blockquote>
+<p><strong>hyper_param</strong> : numpy array</p>
+<blockquote>
+<div><p>The hyper-parameters for each marginal distribution. Use None when the hyper-parameter is unknow and must be estimated.</p>
+</div></blockquote>
+<p><strong>hyper_param_start</strong> : numpy array</p>
+<blockquote>
+<div><p>The start value of hyper-parameters during optimization. Must be same dimension of hyper_param.</p>
+</div></blockquote>
+<p><strong>hyper_param_bounds</strong> : numpy array</p>
+<blockquote>
+<div><p>Allowed values for each hyper-parameter.</p>
+</div></blockquote>
+<p><strong>theta_start</strong> : float</p>
+<blockquote>
+<div><p>Initial value of theta in optimization algorithm.</p>
+</div></blockquote>
+<p><strong>theta_bounds</strong> : couple</p>
+<blockquote>
+<div><p>Allowed values of theta.</p>
+</div></blockquote>
+<p><strong>optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization when no theta_bounds was specified.</p>
+</div></blockquote>
+<p><strong>bounded_optimize_method</strong> : str</p>
+<blockquote>
+<div><p>The optimization method used in SciPy minimization under constraints</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>optimizeResult</strong> : OptimizeResult</p>
+<blockquote>
+<div><p>The optimization result returned from SciPy.</p>
+</div></blockquote>
+<p><strong>estimatedHyperParams</strong> : numpy array</p>
+<blockquote class="last">
+<div><p>The estimated hyper-parameters</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>The difference with the previous method is that hyper-parameters are estimated independently from the copula’s parameter.</p>
+<div class="math">
+\[\forall 1 \leq j \leq d, \hat{\beta}_j = \text{argmax}_{\beta_j} \sum_{i=1}^n \log f_i(x_{ij}, \beta_j)\]</div>
+<p>Then, our observations <span class="math">\(\mathbf{x}\)</span> are transformed into uniform variables <span class="math">\(\mathbf{u}\)</span>.</p>
+<div class="math">
+\[\forall 1 \leq i \leq n, \forall 1 \leq i \leq d, u_{ij}=F_j(x_{ij}, \hat{\beta_j})\]</div>
+<p>Finally, as we did before, we compute the likelihood function and use optimization algorithm to estimate the parameter <span class="math">\(\theta\)</span>.</p>
+<div class="math">
+\[\hat{\theta} = \text{argmax}_{\theta} \sum_{i=1}^n \log c(u_{i1}, ..., u_{id}, \theta)\]</div>
+<p>The specifications of this method are the same of MLE, and you can use this method calling fitting process.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span>     <span class="n">clayton</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ifm&#39;</span><span class="p">,</span> <span class="n">marginals</span><span class="o">=</span><span class="p">[</span><span class="n">gamma</span><span class="p">,</span> <span class="n">exp</span><span class="p">],</span> <span class="n">hyper_param</span><span class="o">=</span><span class="n">hyperParams</span><span class="p">,</span> <span class="n">hyper_param_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="module-estimation">
 <span id="canonical-maximum-likelihood-estimation-cmle"></span><h2>Canonical Maximum Likelihood Estimation (CMLE)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
@@ -315,7 +397,7 @@
 </table>
 </dd></dl>
 
-<p>This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF <span class="math">\(\hat{F}_j\)</span> for each random variable is computed and observations <span class="math">\(\mathbf{x}\)</span> are transformed into uniform data <span class="math">\(\mathbf{u}\)</span>.</p>
+<p>This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF <span class="math">\(\hat{F}_j\)</span> for each random variable is computed and observations <span class="math">\(\mathbf{x}\)</span> are transformed into uniform variables <span class="math">\(\mathbf{u}\)</span>.</p>
 <div class="math">
 \[\forall 1 \leq i \leq n, \forall 1 \leq j \leq d, u_{ij}=\hat{F}_j(x_{ij})\]</div>
 <p>Estimating the parameter of the copula is then applied maximizing log-likelihood on transformed data.</p>
@@ -335,6 +417,8 @@
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="simulation.html" class="btn btn-neutral float-right" title="Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="copula.html" class="btn btn-neutral" title="Copula" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

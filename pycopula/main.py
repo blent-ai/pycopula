@@ -24,12 +24,12 @@ indep = Copula(dim=2, name='frechet_up')
 student = StudentCopula(dim=2)
 gaussian = GaussianCopula(dim=2)
 
-opti, params = clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
+#opti, params = clayton.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
 #gaussian.fit(data)
-print(clayton)
-print(params)
+#print(clayton)
+#print(params)
 
-opti, params = clayton.fit(data, method='ifm', marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
+opti, params = clayton.fit(data, method='ifm', marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
 print(clayton)
 print(params)
 
@@ -40,8 +40,8 @@ clayton = ArchimedeanCopula(family="clayton", dim=2)
 boundAlpha = [0, None] # Greater than 0
 boundGamma = [0, None]
 bounds = [ boundAlpha, boundGamma ]
-paramX1 = [None, 1.2] # Hyper-parameters of first Gamma
-paramX2 = [1.8, None] # Hyper-parameters of second Gamma
+paramX1 = { 'a': None, 'scale': 1.2 } # Hyper-parameters of first Gamma
+paramX2 = { 'scale': None } # Hyper-parameters of second Gamma
 hyperParams = [ paramX1, paramX2 ] # The hyper-parameters
 gamma = scipy.stats.gamma # The Gamma distribution
 # Fitting copula with MLE method and Gamma marginals distributions

@@ -12,6 +12,7 @@ Maximum Likelihood Estimation (MLE)
 
 .. automodule:: estimation
 	:members: mle
+
 The MLE objective is to maximize the log-likelihood function over all parameters and hyper-parameters of marginals. We suppose that :math:`X_j \sim f(\beta_j)` where :math:`\beta_j` is an hyper-parameter of the copula. The MLE will then return the copula's parameter and all estimated hyper-parameters at the same time. The estimated parameters :math:`\hat{\theta}, \hat{\beta}_1, ..., \hat{\beta}_d` are solution to the following optimization problem.
 
 .. math::
@@ -19,12 +20,12 @@ The MLE objective is to maximize the log-likelihood function over all parameters
 
 
 
-For instance, suppose that we would like to fit a copula thanks to MLE method where :math:`X_1 \sim Gamma(\alpha, 1.2)` and :math:`X_2 \sim Gamma(1.8, \gamma)` with :math:`\alpha > 0` and :math:`\gamma > 0`. Then we would write the following code :
+For instance, suppose that we would like to fit a copula thanks to MLE method where :math:`X_1 \sim Gamma(\alpha, 1.2)` and :math:`X_2 \sim Exp(\lambda)` with :math:`\alpha > 0` and :math:`\lambda > 0`. Then we would write the following code :
 
-.. code-block:: python
+.. code-block:: pythons
    :emphasize-lines: 3,5
 
-	mle(copula, X, marginals=[ scipy.stats.gamma, scipy.stats.gamma ], hyper_param=[ [None, 1.2], [1.8, None] ], hyper_param_bounds=[ [0, None], [0, None]])
+	mle(copula, X, marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
 
 Use None to consider an hyper-parameter as unknown and None to define :math:`\pm \infty` in hyper-parameters bounds. Here is a detailled example on how to fit a Clayton copula with MLE.
 
@@ -33,26 +34,52 @@ Use None to consider an hyper-parameter as unknown and None to define :math:`\pm
 
 	clayton = ArchimedeanCopula(family="clayton", dim=2)
 	boundAlpha = [0, None] # Greater than 0
-	boundGamma = [0, None]
-	bounds = [ boundAlpha, boundGamma ]
-	paramX1 = [None, 1.2] # Hyper-parameters of first Gamma
-	paramX2 = [1.8, None] # Hyper-parameters of second Gamma
+	boundLambda = [0, None]
+	bounds = [ boundAlpha, boundLambda ]
+	paramX1 = { 'a': None, 'scale': 1.2 } # Hyper-parameters of Gamma
+	paramX2 = { 'scale': None } # Hyper-parameters of Exp
 	hyperParams = [ paramX1, paramX2 ] # The hyper-parameters
 	gamma = scipy.stats.gamma # The Gamma distribution
-	# Fitting copula with MLE method and Gamma marginals distributions
-	clayton.fit(data, method='mle', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
+	expon = scipy.stats.expon # The Exponential distribution
+	# Fitting copula with MLE method and Gamma/Exp marginals distributions
+	clayton.fit(data, method='mle', marginals=[gamma, exp], hyper_param=hyperParams, hyper_param_bounds=bounds)
 
 Keep in mind that, in case where there are many hyper-parameters, the computational cost can be extremely high.
 
 Inference Functions for Margins (IFM)
-----------------------------
+--------------------------------------
+.. automodule:: estimation
+	:members: ifm
+
+The difference with the previous method is that hyper-parameters are estimated independently from the copula's parameter.
+
+.. math::
+	\forall 1 \leq j \leq d, \hat{\beta}_j = \text{argmax}_{\beta_j} \sum_{i=1}^n \log f_i(x_{ij}, \beta_j)
+
+Then, our observations :math:`\mathbf{x}` are transformed into uniform variables :math:`\mathbf{u}`.
+
+.. math::
+	\forall 1 \leq i \leq n, \forall 1 \leq i \leq d, u_{ij}=F_j(x_{ij}, \hat{\beta_j})
+
+Finally, as we did before, we compute the likelihood function and use optimization algorithm to estimate the parameter :math:`\theta`.
+
+.. math::
+	\hat{\theta} = \text{argmax}_{\theta} \sum_{i=1}^n \log c(u_{i1}, ..., u_{id}, \theta)
+
+The specifications of this method are the same of MLE, and you can use this method calling fitting process.
+
+.. code-block:: python
+   :emphasize-lines: 3,5
+
+	clayton.fit(data, method='ifm', marginals=[gamma, exp], hyper_param=hyperParams, hyper_param_bounds=bounds)
+
 
 Canonical Maximum Likelihood Estimation (CMLE)
 -----------------------------------------------
 .. automodule:: estimation
 	:members: cmle
 
-This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF :math:`\hat{F}_j` for each random variable is computed and observations :math:`\mathbf{x}` are transformed into uniform data :math:`\mathbf{u}`.
+This semi-parametric method does not require to specify the marginals distributions of the copula. Indeed, instead of estimating the hyper-parameters, the empirical CDF :math:`\hat{F}_j` for each random variable is computed and observations :math:`\mathbf{x}` are transformed into uniform variables :math:`\mathbf{u}`.
 
 .. math::
 	\forall 1 \leq i \leq n, \forall 1 \leq j \leq d, u_{ij}=\hat{F}_j(x_{ij})
