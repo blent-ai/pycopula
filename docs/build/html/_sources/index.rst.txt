@@ -11,3 +11,4 @@ Welcome to the official documentation of PyCopula library.
    estimation
    simulation
    visualization
+   examples

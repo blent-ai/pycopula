@@ -116,6 +116,10 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="simulation.html">Simulation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#d-visualization">3D Visualization</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -190,7 +194,7 @@
 <span id="maximum-likelihood-estimation-mle"></span><h2>Maximum Likelihood Estimation (MLE)<a class="headerlink" href="#module-estimation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="estimation.mle">
-<code class="descclassname">estimation.</code><code class="descname">mle</code><span class="sig-paren">(</span><em>copula</em>, <em>X</em>, <em>marginals</em>, <em>hyper_param</em>, <em>hyper_param_start=None</em>, <em>hyper_param_bounds=None</em>, <em>theta_start=0</em>, <em>theta_bounds=None</em>, <em>optimize_method='Nelder-Mead'</em>, <em>bounded_optimize_method='SLSQP'</em><span class="sig-paren">)</span><a class="headerlink" href="#estimation.mle" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">estimation.</code><code class="descname">mle</code><span class="sig-paren">(</span><em>copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_bounds=None, theta_start=[0], theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'</em><span class="sig-paren">)</span><a class="headerlink" href="#estimation.mle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the MLE on specified data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -220,7 +224,7 @@
 <blockquote>
 <div><p>Allowed values for each hyper-parameter.</p>
 </div></blockquote>
-<p><strong>theta_start</strong> : float</p>
+<p><strong>theta_start</strong> : numpy array</p>
 <blockquote>
 <div><p>Initial value of theta in optimization algorithm.</p>
 </div></blockquote>
@@ -234,7 +238,7 @@
 </div></blockquote>
 <p><strong>bounded_optimize_method</strong> : str</p>
 <blockquote>
-<div><p>The optimization method used in SciPy minimization under constraints</p>
+<div><p>The optimization method used in SciPy minimization under constraints.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -244,7 +248,7 @@
 </div></blockquote>
 <p><strong>estimatedHyperParams</strong> : numpy array</p>
 <blockquote class="last">
-<div><p>The estimated hyper-parameters</p>
+<div><p>The estimated hyper-parameters.</p>
 </div></blockquote>
 </td>
 </tr>

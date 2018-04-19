@@ -190,6 +190,16 @@ class ArchimedeanCopula(Copula):
 	families = [ 'clayton', 'gumbel', 'frank', 'joe', 'amh' ]
 
 	def __init__(self, family='clayton', dim=2):
+		"""
+		Creates an Archimedean copula.
+		
+		Parameters
+		----------
+		family : str
+			The name of the copula.
+		dim : int
+			The dimension of the copula.
+		"""
 		super(ArchimedeanCopula, self).__init__(dim=dim)
 		self.family = family
 		self.parameter = 2.0
@@ -448,21 +458,23 @@ class ArchimedeanCopula(Copula):
 				elif self.family in ['gumbel', 'joe'] :
 					bounds = (1, None)
 
-			theta_start = np.array(2.)
+			theta_start = [ 2 ]
 			if self.family == 'amh':
-				theta_start = np.array(0.5)
-			
+				theta_start = [ 0.5 ]
+				
 			if method == 'mle':
 				res, estimationData = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			else:
 				res, estimationData = estimation.ifm(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 				
 			self.parameter = res['x'][0]
+		else:
+			raise ValueError("Method '{0}' is not defined.".format(method))
 			
 		return self.parameter, estimationData
 		
 class GaussianCopula(Copula):
-	def __init__(self, dim=2, sigma=[[1, 0], [0, 1]]):
+	def __init__(self, dim=2, sigma=[[1, 0.8], [0.8, 1]]):
 		super(GaussianCopula, self).__init__(dim=dim)
 		self.setCovariance(sigma)
 
@@ -497,19 +509,37 @@ class GaussianCopula(Copula):
 
 	def pdf(self, x):
 		self._checkDimension(x)
+		#return self.pdf_param(x, self.sigma)
 		u_i = norm.ppf(x)
 		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
 		
 	def pdf_param(self, x, sigma):
 		self._checkDimension(x)
-		u_i = norm.ppf(x)
+		if self.dim == 2 and not(hasattr(sigma, '__len__')):
+			sigma = [sigma]
+		if len(np.asarray(sigma).shape) == 2 and len(sigma) != self.dim:
+			raise ValueError("Expected covariance matrix of dimension {0}.".format(self.dim))
+		u = norm.ppf(x)
+		
+		cov = np.ones([ self.dim, self.dim ])
+		idx = 0
+		if len(np.asarray(sigma).shape) <= 1:
+			if len(sigma) == self.dim * (self.dim - 1) / 2:
+				for j in range(self.dim):
+					for i in range(j + 1, self.dim):
+						cov[j][i] = sigma[idx]
+						cov[i][j] = sigma[idx]
+						idx += 1
+			else:
+				raise ValueError("Expected covariance matrix, get an array.")
+		
 		if self.dim == 2:
-			sigmaDet = sigma[0][0] * sigma[1][1] - sigma[0][1]**2
-			sigmaInv = 1. / sigmaDet * np.asarray([[ sigma[1][1], -sigma[0][1]], [ -sigma[0][1], sigma[0][0] ]])
+			sigmaDet = cov[0][0] * cov[1][1] - cov[0][1]**2
+			sigmaInv = 1. / sigmaDet * np.asarray([[ cov[1][1], -cov[0][1]], [ -cov[0][1], cov[0][0] ]])
 		else:
-			sigmaDet = np.linalg.det(sigma)
-			sigmaInv = np.linalg.inv(sigma)
-		return sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i)))
+			sigmaDet = np.linalg.det(cov)
+			sigmaInv = np.linalg.inv(cov)
+		return [ sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i))) for u_i in u ]
 		
 	def quantile(self,  x):
 		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.sigma)
@@ -538,7 +568,7 @@ class GaussianCopula(Copula):
 		n = X.shape[0]
 		if n < 1:
 			raise ValueError("At least two values are needed to fit the copula.")
-		self._checkDimension(X[0,:])
+		self._checkDimension(X[0, :])
 
 		# Canonical Maximum Likelihood Estimation
 		if method == 'cmle':
@@ -582,13 +612,17 @@ class GaussianCopula(Copula):
 			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
 			res = estimation.cmle(log_likelihood, theta_start=rho_start, theta_bounds=None, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			rho = res['x']
+		elif method == 'mle':
+			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
+			res, estimationData = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=rho_start, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
+			rho = res['x']
 			
-			self.sigma = np.identity(self.dim)
-			# We extract rho values to covariance matrix
-			for i in range(self.dim - 1):
-				for j in range(i + 1,  self.dim):
-					self.sigma[i][j] = rho[i * (self.dim - 1) + j - 1]
-					self.sigma[self.dim - i - 1][self.dim - j - 1] = self.sigma[i][j]
+		self.sigma = np.identity(self.dim)
+		# We extract rho values to covariance matrix
+		for i in range(self.dim - 1):
+			for j in range(i + 1,  self.dim):
+				self.sigma[i][j] = rho[i * (self.dim - 1) + j - 1]
+				self.sigma[self.dim - i - 1][self.dim - j - 1] = self.sigma[i][j]
 			
 		# We compute the nearest semi-definite positive matrix for the covariance matrix
 		self.sigma = math_misc.nearPD(self.sigma)
