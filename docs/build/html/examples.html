@@ -81,12 +81,12 @@
 				<p style="margin-top: 15px;margin-bottom: 0px;font-size: 1.8rem;font-family: 'Overpass', serif;font-weight: 800;color: #ecb144;">AIPCloud</p>
 			</a>
 			<p style="margin-top: 5px;color: rgba(255, 255, 255, 0.8);font-size: 0.8rem; width: 80%;">
-			Official documentation of PyCopula. Please visit <a href="" target="_blank" style="color: #ecb144;">GitHub</a> for more details.
+			Official documentation of PyCopula. Please visit <a href="https://github.com/AIPCloud/PyCopula" target="_blank" style="color: #ecb144;">GitHub</a> for more details.
 			</p>
 		</center>
 	</div>
 	<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
-		<a href="https://github.com/AIPCloud/PyCopula" target="_blank">
+		<a href="https://github.com/AIPCloud" target="_blank">
 			<span class="rst-current-version" data-toggle="rst-current-version">
       				<span class="fa fa-book" style="color: #ecb144;"> AIPCloud GitHub</span>
 			</span>
@@ -119,6 +119,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#d-visualization">2D Visualization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id1">3D Visualization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sampling">Sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#concentration-functions">Concentration Functions</a></li>
 </ul>
 </li>
 </ul>
@@ -272,7 +273,7 @@
 </span>     <span class="kn">from</span> <span class="nn">pycopula.visualization</span> <span class="kn">import</span> <span class="n">pdf_2d</span>
      <span class="kn">from</span> <span class="nn">pycopula.simulation</span> <span class="kn">import</span> <span class="n">simulate</span>
 
-     <span class="c1"># The Gaussian copula withb specified covariance matrix</span>
+     <span class="c1"># The Gaussian copula with specified covariance matrix</span>
      <span class="n">gaussian</span> <span class="o">=</span> <span class="n">GaussianCopula</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
      <span class="c1"># Visualization of CDF and PDF</span>
      <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">pdf_2d</span><span class="p">(</span><span class="n">gaussian</span><span class="p">)</span>
@@ -289,6 +290,40 @@
      <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Simulation of 1000 points with Gaussian copula&quot;</span><span class="p">)</span>
      <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
      <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="concentration-functions">
+<h2>Concentration Functions<a class="headerlink" href="#concentration-functions" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/example_5.png" class="align-center" src="_images/example_5.png" />
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="hll">     <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span>     <span class="kn">from</span> <span class="nn">pycopula.copula</span> <span class="kn">import</span> <span class="n">ArchimedeanCopula</span>
+     <span class="kn">from</span> <span class="nn">pycopula.visualization</span> <span class="kn">import</span> <span class="n">concentrationFunction</span>
+     <span class="kn">from</span> <span class="nn">pycopula.simulation</span> <span class="kn">import</span> <span class="n">simulate</span>
+<span class="hll">
+</span>     <span class="c1"># The Clayton copula</span>
+     <span class="n">clayton</span> <span class="o">=</span> <span class="n">ArchimedeanCopula</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s1">&#39;clayton&#39;</span><span class="p">)</span>
+
+     <span class="c1"># Sampling of size 1000 with Clayton copula</span>
+     <span class="n">sim</span> <span class="o">=</span> <span class="n">simulate</span><span class="p">(</span><span class="n">clayton</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+
+     <span class="c1"># Computing theoritical and empirical concentrations functions</span>
+     <span class="n">downI</span><span class="p">,</span> <span class="n">upI</span><span class="p">,</span> <span class="n">tailDown</span><span class="p">,</span> <span class="n">tailUp</span> <span class="o">=</span> <span class="n">concentrationFunction</span><span class="p">(</span><span class="n">sim</span><span class="p">)</span>
+     <span class="n">ClaytonDown</span> <span class="o">=</span> <span class="p">[</span> <span class="n">clayton</span><span class="o">.</span><span class="n">concentrationDown</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">downI</span> <span class="p">]</span>
+     <span class="n">ClaytonUp</span> <span class="o">=</span> <span class="p">[</span> <span class="n">clayton</span><span class="o">.</span><span class="n">concentrationUp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">upI</span> <span class="p">]</span>
+
+     <span class="c1"># Plotting</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">downI</span><span class="p">,</span> <span class="n">tailDown</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Empirical concentration&quot;</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">upI</span><span class="p">,</span> <span class="n">tailUp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">downI</span><span class="p">,</span> <span class="n">ClaytonDown</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Clayton concentration&quot;</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">upI</span><span class="p">,</span> <span class="n">ClaytonUp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Lower-Upper tail dependence Coefficients&quot;</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Lower Tail      Upper Tail&quot;</span><span class="p">)</span>
+     <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
      <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
