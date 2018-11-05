@@ -32,11 +32,12 @@ print(clayton)
 #opti, params = clayton.fit(data, method='ifm', marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
 #print(clayton)
 #print(params)
-opti, params = gaussian.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
+#opti, params = gaussian.fit(data, method='mle', marginals=[ scipy.stats.gamma, scipy.stats.expon ], hyper_param=[ { 'a': None, 'scale': 1.2 }, { 'scale': None } ], hyper_param_bounds=[ [0, None], [0, None]])
+gaussian.fit(data, method='cmle')
 print(gaussian)
 print(params)
 #print(gaussian)
-sys.exit()
+#sys.exit()
 
 clayton = ArchimedeanCopula(family="clayton", dim=2)
 boundAlpha = [0, None] # Greater than 0
@@ -47,7 +48,8 @@ paramX2 = { 'scale': None } # Hyper-parameters of second Gamma
 hyperParams = [ paramX1, paramX2 ] # The hyper-parameters
 gamma = scipy.stats.gamma # The Gamma distribution
 # Fitting copula with MLE method and Gamma marginals distributions
-clayton.fit(data, method='ifm', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
+#clayton.fit(data, method='ifm', marginals=[gamma, gamma], hyper_param=hyperParams, hyper_param_bounds=bounds)
+clayton.fit(data, method='cmle')
 
 u, v, carchi = pdf_2d(clayton, zclip=5)
 u, v, Carchi = cdf_2d(clayton)

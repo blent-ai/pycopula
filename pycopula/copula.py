@@ -304,6 +304,8 @@ class ArchimedeanCopula(Copula):
 				product = 1
 				for i in range(1, order):
 					product *= (-1. / theta - i)
+				if theta * t < -1:
+					return -theta**(order - 1) * product 
 				return -theta**(order - 1) * product * (1. + theta * t)**(-1. / theta - order)
 
 			invertNDerivative = claytonInvertnDerivative	
@@ -477,6 +479,9 @@ class GaussianCopula(Copula):
 	def __init__(self, dim=2, sigma=[[1, 0.8], [0.8, 1]]):
 		super(GaussianCopula, self).__init__(dim=dim)
 		self.setCovariance(sigma)
+
+	def __str__(self):
+		return "Gaussian Copula :\n*Covariance : \n" + str(self.sigma)
 
 	def cdf(self, x):
 		self._checkDimension(x)

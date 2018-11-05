@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from copula import StudentCopula
+from copula import GaussianCopula
 from mpl_toolkits.mplot3d import Axes3D
 from pycopula.visualization import pdf_2d, cdf_2d
 
 # The Clayton copula
-clayton = StudentCopula( dim=2)
+clayton = GaussianCopula(dim=2)
 
 # Visualization of CDF and PDF
 u, v, C = cdf_2d(clayton)
