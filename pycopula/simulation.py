@@ -5,8 +5,17 @@ from numpy.linalg import inv, cholesky
 from scipy.stats import multivariate_normal, invgamma, t as student
 import math
 
-# Only for normal copula
 def simulate(copula, n):
+	"""
+	Generates random variables with selected copula's structure.
+
+	Parameters
+	----------
+	copula : Copula
+		The Copula to sample.
+	n : integer
+		The size of the sample.
+	"""
 	d = copula.getDimension()
 	
 	X = []

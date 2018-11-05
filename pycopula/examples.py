@@ -1,32 +1,27 @@
-import sys
-
-sys.path.insert(0, '..')
-
+import numpy as np
 import matplotlib.pyplot as plt
-from pycopula.copula import ArchimedeanCopula
-from pycopula.visualization import concentrationFunction
-from pycopula.simulation import simulate
+from matplotlib import cm
+from copula import StudentCopula
+from mpl_toolkits.mplot3d import Axes3D
+from pycopula.visualization import pdf_2d, cdf_2d
 
 # The Clayton copula
-clayton = ArchimedeanCopula(dim=2, family='clayton')
+clayton = StudentCopula( dim=2)
 
-# Sampling of size 1000 with Clayton copula
-sim = simulate(clayton, 1000)
-
-# Computing theoritical and empirical concentrations functions
-downI, upI, tailDown, tailUp = concentrationFunction(sim)
-ClaytonDown = [ clayton.concentrationDown(x) for x in downI ]
-ClaytonUp = [ clayton.concentrationUp(x) for x in upI ]
+# Visualization of CDF and PDF
+u, v, C = cdf_2d(clayton)
+u, v, c = pdf_2d(clayton)
 
 # Plotting
-plt.figure()
-plt.plot(downI, tailDown, color='red', linewidth=3, label="Empirical concentration")
-plt.plot(upI, tailUp, color='red', linewidth=3)
-plt.plot(downI, ClaytonDown, color='blue', linewidth=1, label="Clayton concentration")
-plt.plot(upI, ClaytonUp, color='blue', linewidth=1)
-plt.plot([0.5, 0.5], [0, 1], color='gray', alpha=0.6, linestyle='--', linewidth=1)
-plt.title("Lower-Upper tail dependence Coefficients")
-plt.xlabel("Lower Tail      Upper Tail")
-plt.legend(loc=0)
+fig = plt.figure()
+ax = fig.add_subplot(121, projection='3d', title="Clayton copula CDF")
+X, Y = np.meshgrid(u, v)
+
+ax.set_zlim(0, 5)
+ax.plot_surface(X, Y, c, cmap=cm.Blues)
+ax.plot_wireframe(X, Y, c, color='black', alpha=0.3)
+
+ax = fig.add_subplot(122, title="Clayton copula PDF")
+ax.contour(X, Y, c, levels = np.arange(0,5,0.15))
 
 plt.show()

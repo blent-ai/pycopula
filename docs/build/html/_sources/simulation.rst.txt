@@ -1,2 +1,18 @@
 Simulation
 ============
+
+For each copula (Gaussian, Archimedean or Student), it is possible to generate samples according to copula's structure.
+
+Gaussian Copula Sampling
+------------------------
+
+We suppose that our copula is a gaussian :math:`\mathcal{N}(0, \Sigma)` where :math:`\Sigma` is the covariance matrix. Before sampling new variables from quantile functions, we are required to compute the correlation matrix :math:`P` as follow :
+
+.. math::
+	P=\sqrt{\text{Diag}(\Sigma)}^{-1} \Sigma \sqrt{\text{Diag}(\Sigma)}^{-1}
+
+According to the process, we extract the Cholesky triangular matrix :math:`L` such that :math:`P=L L^{\top}`. Finally, sampling gaussian copula is now easily possible.
+
+* Sample :math:`Z \sim \mathcal{N}(0, I_d)`
+* Compute :math:`V=LZ`
+* Apply quantile function to :math:`V`

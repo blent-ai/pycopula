@@ -669,7 +669,6 @@ class StudentCopula(Copula):
 	def cdf(self, x):
 		self._checkDimension(x)
 		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
-		print(tv)
 		def fun(a, b):
 			return multivariate_t_distribution(np.asarray([a, b]), np.asarray([0, 0]), self.sigma, self.df, self.dim)
 			

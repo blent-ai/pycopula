@@ -114,7 +114,10 @@
 <li class="toctree-l2"><a class="reference internal" href="estimation.html#module-estimation">Canonical Maximum Likelihood Estimation (CMLE)</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#gaussian-copula-sampling">Gaussian Copula Sampling</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="examples.html#d-visualization">2D Visualization</a></li>
@@ -189,6 +192,19 @@
             
   <div class="section" id="simulation">
 <h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
+<p>For each copula (Gaussian, Archimedean or Student), it is possible to generate samples according to copula’s structure.</p>
+<div class="section" id="gaussian-copula-sampling">
+<h2>Gaussian Copula Sampling<a class="headerlink" href="#gaussian-copula-sampling" title="Permalink to this headline">¶</a></h2>
+<p>We suppose that our copula is a gaussian <span class="math">\(\mathcal{N}(0, \Sigma)\)</span> where <span class="math">\(\Sigma\)</span> is the covariance matrix. Before sampling new variables from quantile functions, we are required to compute the correlation matrix <span class="math">\(P\)</span> as follow :</p>
+<div class="math">
+\[P=\sqrt{\text{Diag}(\Sigma)}^{-1} \Sigma \sqrt{\text{Diag}(\Sigma)}^{-1}\]</div>
+<p>According to the process, we extract the Cholesky triangular matrix <span class="math">\(L\)</span> such that <span class="math">\(P=L L^{\top}\)</span>. Finally, sampling gaussian copula is now easily possible.</p>
+<ul class="simple">
+<li>Sample <span class="math">\(Z \sim \mathcal{N}(0, I_d)\)</span></li>
+<li>Compute <span class="math">\(V=LZ\)</span></li>
+<li>Apply quantile function to <span class="math">\(V\)</span></li>
+</ul>
+</div>
 </div>
 
 
