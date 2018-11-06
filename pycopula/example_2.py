@@ -14,31 +14,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data = pd.read_csv("mydata.csv").values[:,1:]
+#data = np.hstack((data, data + np.random.rand(1000, 2)))
+print(data.shape)
 
+#np.__config__.show()
 print("Begin")
-archimedean = GaussianCopula(dim=2)
+archimedean = ArchimedeanCopula(family="frank", dim=2)
 elapsedTime = time.time()
 archimedean.fit(data, method="cmle")
 elapsedTime = time.time() - elapsedTime
 print(elapsedTime)
-
-
-u, v, C = cdf_2d(archimedean)
-u, v, c = pdf_2d(archimedean)
-
-fig = plt.figure()
-ax = fig.add_subplot(121, title="Clayton copula CDF")
-X, Y = np.meshgrid(u, v)
-
-
-ax = fig.add_subplot(122, title="Clayton copula PDF")
-ax.contour(X, Y, c, levels = np.arange(0,5,0.2))
-
-plt.show()
-
+print(archimedean)
 sys.exit()
 print("End")
-print(archimedean)
 
 clayton = ArchimedeanCopula(family="clayton", dim=2)
 boundAlpha = [0, None] # Greater than 0

@@ -284,6 +284,10 @@ class ArchimedeanCopula(Copula):
 		# The future function (if it exists) corresponding to the n-th derivative of the invert
 		invertNDerivative = None
 
+		# Exactly 0 causes instability during computing for these copulas
+		if self.family in [ "frank", "clayton"] and theta == 0:
+			theta = 1e-10
+
 		# For each family, the structure is the same
 		if self.family == 'clayton':
 			# We compute product and sum
@@ -415,26 +419,38 @@ class ArchimedeanCopula(Copula):
 				pobs.append(u_i)
 
 			pobs = np.transpose(np.asarray(pobs))
+			
 
+			is_scalar = True
+			theta_start = np.array(1.)
 			bounds = theta_bounds
 			if bounds == None:
 				if self.family == 'amh':
 					bounds = (-1, 1 - 1e-6)
+					is_scalar = False
 				elif self.family == 'clayton':
 					bounds = (-1, None)
 				elif self.family in ['gumbel', 'joe'] :
-
 					bounds = (1, None)
+					is_scalar = False
 
 			def log_likelihood(theta):
-				return sum([ np.log(self.pdf_param(pobs[i,:], theta)) for i in range(n) ])
-
-			theta_start = np.array(2.)
+				param_obs = np.apply_along_axis(lambda x: self.pdf_param(x, theta), arr=pobs, axis=1)
+				return -np.log(param_obs).sum()
+			
 			if self.family == 'amh':
 				theta_start = np.array(0.5)
+			elif self.family in ['gumbel', 'joe']:
+				theta_start = np.array(1.5)
 
-			res = estimation.cmle(log_likelihood, theta_start=theta_start, theta_bounds=bounds, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
-			self.parameter = res['x'][0]
+			res = estimation.cmle(log_likelihood,
+					theta_start=theta_start,
+					theta_bounds=bounds,
+					optimize_method=kwargs.get('optimize_method', 'Brent'),
+					bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'),
+					is_scalar=is_scalar)
+
+			self.parameter = res['x'] if is_scalar else res['x'][0]
 		
 		# Maximum Likelihood Estimation and Inference Functions for Margins
 		elif method in [ 'mle', 'ifm' ]:

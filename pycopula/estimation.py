@@ -1,8 +1,8 @@
 import numpy as np
 
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 
-def cmle(log_lh, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'):
+def cmle(log_lh, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP', is_scalar=False):
 	"""
 	Computes the CMLE on a specified log-likelihood function.
 	
@@ -23,10 +23,15 @@ def cmle(log_lh, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead'
 	-------
 	OptimizeResult
 		The optimization result returned from SciPy.
-	"""	
+	"""
+	if is_scalar:
+		if theta_bounds == None:
+			return minimize_scalar(log_lh, method=optimize_method)
+		return minimize_scalar(log_lh, bounds=theta_bounds, method=optimize_method, options={'maxiter': 10})
+
 	if theta_bounds == None:
-		return minimize(lambda x: -log_lh(x), theta_start, method = optimize_method)
-	return minimize(lambda x: -log_lh(x), theta_start, method = bounded_optimize_method, bounds=[theta_bounds])
+		return minimize(log_lh, theta_start, method=optimize_method)
+	return minimize(log_lh, theta_start, method=bounded_optimize_method, bounds=[theta_bounds], options={'maxiter': 10})
 	
 def mle(copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_bounds=None, theta_start=[0], theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'):
 	"""
