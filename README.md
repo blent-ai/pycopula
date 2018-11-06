@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/MaximeJumelle/PyCopula.svg?branch=master)](https://travis-ci.org/MaximeJumelle/PyCopula)
+
 # PyCopula - Dependencies with copulas
 PyCopula is an easy-to-use Python library that allows you to study random variables dependencies with copulas. It comes with useful tools and features to plot, estimate or simulate on copulas.
 

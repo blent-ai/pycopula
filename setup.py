@@ -10,7 +10,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(name='PyCopula',
       version='0.1',
-      description='PyCopula - Dependencies with copulas',
+      description='Python copulas library for dependency modeling',
       author='Maxime Jumelle',
       author_email='maxime@aipcloud.io',
       license="Apache 2",
