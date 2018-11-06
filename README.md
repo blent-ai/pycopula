@@ -1,5 +1,7 @@
+
 [![Build Status](https://travis-ci.org/MaximeJumelle/PyCopula.svg?branch=master)](https://travis-ci.org/MaximeJumelle/PyCopula)
-# PyCopula - Dependencies with copulas
+
+![Screenshot](https://raw.githubusercontent.com/MaximeJumelle/pycopula/master/resources/logo.png)
 PyCopula is an easy-to-use Python library that allows you to study random variables dependencies with copulas. It comes with useful tools and features to plot, estimate or simulate on copulas.
 
 * [Online Documentation](https://maximejumelle.github.io/pycopula/)
@@ -18,9 +20,10 @@ PyCopula natively handle various families of copulas including :
 
 ### Estimation
 Three methods of estimation, based on *SciPy* numerical optimization routines, are available to provide high flexibility during fitting process.
-- MLE : Maximum Likelihood Estimation
-- IFM : Inference For Margins
-- CMLE : Canonical Maximum Likelihood Estimation
+- Moments estimation on particular copulas
+- Maximum Likelihood Estimation (MLE)
+- Inference For Margins (IFM)
+- Canonical Maximum Likelihood Estimation (CMLE)
 
 ## Usage
 PyCopula was designed to provide an easy-to-use interface that does not require a lot in both programming and computing. As a result, only a few lines are needed to properly fit any copulas, as demonstrated in the following code snippet.
