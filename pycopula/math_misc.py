@@ -55,9 +55,3 @@ def derivativeOf(fun, x, order):
 	res = sum([ (-1)**(k+1) * scipy.special.binom(order, k) * fun(x + k * h) for k in range(order+1) ])
 	return scipy.misc.derivative(fun, 2, n=order, order=order+order%2+1)
 	return res / h**order
-	
-if __name__ == '__main__':
-	def myFun(x):
-		return x**3 - 2*x + 4
-		
-	print(derivativeOf(myFun, 2, 4))

@@ -1,4 +1,5 @@
 import numpy as np
+
 from scipy.optimize import minimize
 
 def cmle(log_lh, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'):

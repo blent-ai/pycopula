@@ -6,30 +6,22 @@
 """
 
 __author__ = "Maxime Jumelle"
-__copyright__ = "Copyright 2018, AIPCloud"
-__credits__ = "Maxime Jumelle"
 __license__ = "Apache 2.0"
-__version__ = "0.1.0"
 __maintainer__ = "Maxime Jumelle"
 __email__ = "maxime@aipcloud.io"
-__status__ = "Development"
 
-import sys
-
-sys.path.insert(0, '..')
-
-import archimedean_generators as generators
-import math_misc
-from math_misc import multivariate_t_distribution
-import estimation
-
-import scipy
-from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
-from scipy.linalg import sqrtm
-import scipy.misc
+from . import archimedean_generators as generators
+from . import math_misc
+from .math_misc import multivariate_t_distribution
+from . import estimation
 
 import numpy as np
 from numpy.linalg import inv
+
+import scipy
+import scipy.misc
+from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
+from scipy.linalg import sqrtm
 
 # An abstract copula object
 class Copula():
@@ -56,11 +48,11 @@ class Copula():
 	def __str__(self):
 		return "Copula ({0}).".format(self.name)
 
-	def _checkDimension(self, x):
+	def _check_dimension(self, x):
 		if len(x) != self.dim:
 			raise ValueError("Expected vector of dimension {0}, get vector of dimension {1}".format(self.dim, len(x)))
 	
-	def getDimension(self):
+	def dimension(self):
 		"""
 		Returns the dimension of the copula.
 		"""
@@ -124,7 +116,7 @@ class Copula():
 		x : numpy array (of size d)
 			Values to compute CDF.
 		"""
-		self._checkDimension(x)
+		self._check_dimension(x)
 		if self.name == 'indep':
 			return np.prod(x)
 		elif self.name == 'frechet_up':
@@ -141,13 +133,13 @@ class Copula():
 		x : numpy array (of size d)
 			Values to compute PDF.
 		"""
-		self._checkDimension(x)
+		self._check_dimension(x)
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
 			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
 			
-	def concentrationDown(self, x):
+	def concentration_down(self, x):
 		"""
 		Returns the theoritical lower concentration function.
 		
@@ -159,7 +151,7 @@ class Copula():
 			raise ValueError("The argument must be included between 0 and 0.5.")
 		return self.cdf([x, x]) / x
 		
-	def concentrationUp(self, x):
+	def concentration_up(self, x):
 		"""
 		Returns the theoritical upper concentration function.
 		
@@ -171,7 +163,7 @@ class Copula():
 			raise ValueError("The argument must be included between 0.5 and 1.")
 		return (1. - 2*x + self.cdf([x, x])) / (1. - x)
 		
-	def concentrationFunction(self, x):
+	def concentration_function(self, x):
 		"""
 		Returns the theoritical concentration function.
 		
@@ -182,8 +174,8 @@ class Copula():
 		if x < 0 or x > 1:
 			raise ValueError("The argument must be included between 0 and 1.")
 		if x < 0.5:
-			return self.concentrationDown(x)
-		return self.concentrationUp(x)
+			return self.concentration_down(x)
+		return self.concentration_up(x)
 		
 class ArchimedeanCopula(Copula):
 
@@ -228,19 +220,19 @@ class ArchimedeanCopula(Copula):
 	def generator(self, x):
 		return self.generator(x, self.parameter)
 		
-	def inverseGenerator(self, x):
+	def inverse_generator(self, x):
 		return self.generatorInvert(x, self.parameter)
 		
-	def getParameter(self):
+	def get_parameter(self):
 		return self.parameter
 		
-	def setParameter(self, theta):
+	def set_parameter(self, theta):
 		self.parameter = theta
 		
 	def getFamily(self):
 		return self.family
 
-	def _checkDimension(self, x):
+	def _check_dimension(self, x):
 		"""
 		Check if the number of variables is equal to the dimension of the copula.
 		"""
@@ -262,10 +254,10 @@ class ArchimedeanCopula(Copula):
 			The CDF value on x.
 		"""
 		if len(np.asarray(x).shape) > 1:
-			self._checkDimension(x[0])
+			self._check_dimension(x[0])
 			return [ self.generatorInvert(sum([ self.generator(v, self.parameter) for v in row ]), self.parameter) for row in x ]
 		else:
-			self._checkDimension(x)
+			self._check_dimension(x)
 			return self.generatorInvert(sum([ self.generator(v, self.parameter) for v in x ]), self.parameter)
 
 	def pdf_param(self, x, theta):
@@ -284,7 +276,7 @@ class ArchimedeanCopula(Copula):
 		float
 			The PDF value on x.
 		"""
-		self._checkDimension(x)
+		self._check_dimension(x)
 		# prod is the product of the derivatives of the generator for each variable
 		prod = 1
 		# The sum of generators that will be computed on the invert derivative
@@ -397,7 +389,7 @@ class ArchimedeanCopula(Copula):
 		n = X.shape[0]
 		if n < 1:
 			raise ValueError("At least two values are needed to fit the copula.")
-		self._checkDimension(X[0,:])
+		self._check_dimension(X[0,:])
 		estimationData = None
 		
 		# Moments method (only when dimension = 2)
@@ -484,7 +476,7 @@ class GaussianCopula(Copula):
 		return "Gaussian Copula :\n*Covariance : \n" + str(self.sigma)
 
 	def cdf(self, x):
-		self._checkDimension(x)
+		self._check_dimension(x)
 		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.sigma)
 
 	def setCovariance(self, sigma):
@@ -513,13 +505,13 @@ class GaussianCopula(Copula):
 		return self.sigma
 
 	def pdf(self, x):
-		self._checkDimension(x)
+		self._check_dimension(x)
 		#return self.pdf_param(x, self.sigma)
 		u_i = norm.ppf(x)
 		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
 		
 	def pdf_param(self, x, sigma):
-		self._checkDimension(x)
+		self._check_dimension(x)
 		if self.dim == 2 and not(hasattr(sigma, '__len__')):
 			sigma = [sigma]
 		if len(np.asarray(sigma).shape) == 2 and len(sigma) != self.dim:
@@ -573,7 +565,7 @@ class GaussianCopula(Copula):
 		n = X.shape[0]
 		if n < 1:
 			raise ValueError("At least two values are needed to fit the copula.")
-		self._checkDimension(X[0, :])
+		self._check_dimension(X[0, :])
 
 		# Canonical Maximum Likelihood Estimation
 		if method == 'cmle':
@@ -672,7 +664,7 @@ class StudentCopula(Copula):
 		return self.sigma
 		
 	def cdf(self, x):
-		self._checkDimension(x)
+		self._check_dimension(x)
 		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
 		def fun(a, b):
 			return multivariate_t_distribution(np.asarray([a, b]), np.asarray([0, 0]), self.sigma, self.df, self.dim)
@@ -683,7 +675,7 @@ class StudentCopula(Copula):
 		#return scipy.integrate.dblquad(fun, -10, tv[0], lim_0, lim_1)[0]
 		
 	def pdf(self, x):
-		self._checkDimension(x)
+		self._check_dimension(x)
 		D = sqrtm(np.diag(np.diag(self.sigma)))
 		Dinv = inv(D)
 		P = np.dot(np.dot(Dinv, self.sigma), Dinv)

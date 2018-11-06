@@ -1,0 +1,17 @@
+README.md
+setup.py
+pycopula/__init__.py
+pycopula/archimedean_generators.py
+pycopula/copula.py
+pycopula/estimation.py
+pycopula/example_2.py
+pycopula/examples.py
+pycopula/main.py
+pycopula/math_misc.py
+pycopula/simulation.py
+pycopula/visualization.py
+pycopula.egg-info/PKG-INFO
+pycopula.egg-info/SOURCES.txt
+pycopula.egg-info/dependency_links.txt
+pycopula.egg-info/requires.txt
+pycopula.egg-info/top_level.txt
