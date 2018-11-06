@@ -12,12 +12,7 @@ data = pd.read_csv("mydata.csv").values[:,1:]
 
 print("Begin")
 archimedean = ArchimedeanCopula(family="gumbel", dim=2)
-archimedean.fit(data, method="cmle")
+archimedean.fit(data, method="mle")
 print("End")
 print(archimedean)
 
-print("Begin")
-gaussian = GaussianCopula(dim=2)
-gaussian.fit(data, method="cmle")
-print(gaussian)
-print("End")
