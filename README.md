@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/MaximeJumelle/PyCopula.svg?branch=master)](https://travis-ci.org/MaximeJumelle/PyCopula)
+[![Build Status](https://travis-ci.org/MaximeJumelle/PyCopula.svg?branch=master)](https://travis-ci.org/MaximeJumelle/pycopula)
 
 ![Screenshot](https://raw.githubusercontent.com/MaximeJumelle/pycopula/master/resources/logo.png)
 
