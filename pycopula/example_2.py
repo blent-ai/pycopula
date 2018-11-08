@@ -8,20 +8,24 @@ import pandas as pd
 
 from pycopula.visualization import pdf_2d, cdf_2d, concentrationFunction
 from pycopula.simulation import simulate
-from pycopula.copula import ArchimedeanCopula, GaussianCopula
+from pycopula.copula import ArchimedeanCopula, GaussianCopula, StudentCopula
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = pd.read_csv("mydata.csv").values[:,1:]
+data = pd.read_csv("mydata.csv", sep=";").values[:, 1:]
+data = [ [ x.replace(",", ".") for x in row ] for row in data ]
+data = np.random.normal(size=1000)
+data = np.vstack((data, np.cos(data))).T
+data = np.asarray(data).astype(np.float)
 #data = np.hstack((data, data + np.random.rand(1000, 2)))
 print(data.shape)
 
 #np.__config__.show()
 print("Begin")
-archimedean = ArchimedeanCopula(family="frank", dim=2)
+archimedean = StudentCopula(dim=2)
 elapsedTime = time.time()
-archimedean.fit(data, method="cmle")
+archimedean.fit(data, method="cmle", df_fixed=False)
 elapsedTime = time.time() - elapsedTime
 print(elapsedTime)
 print(archimedean)

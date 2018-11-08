@@ -27,11 +27,10 @@ def cmle(log_lh, theta_start=0, theta_bounds=None, optimize_method='Nelder-Mead'
 	if is_scalar:
 		if theta_bounds == None:
 			return minimize_scalar(log_lh, method=optimize_method)
-		return minimize_scalar(log_lh, bounds=theta_bounds, method=optimize_method, options={'maxiter': 10})
-
+		return minimize_scalar(log_lh, bounds=theta_bounds, method='bounded', options={'maxiter': 200})
 	if theta_bounds == None:
 		return minimize(log_lh, theta_start, method=optimize_method)
-	return minimize(log_lh, theta_start, method=bounded_optimize_method, bounds=[theta_bounds], options={'maxiter': 10})
+	return minimize(log_lh, theta_start, method=bounded_optimize_method, bounds=[theta_bounds], options={'maxiter': 200})
 	
 def mle(copula, X, marginals, hyper_param, hyper_param_start=None, hyper_param_bounds=None, theta_start=[0], theta_bounds=None, optimize_method='Nelder-Mead', bounded_optimize_method='SLSQP'):
 	"""

@@ -1,3 +1,5 @@
+# Theory : https://people.math.ethz.ch/~embrecht/ftp/copchapter.pdf
+
 import numpy as np
 import scipy.stats as stats
 from scipy.linalg import sqrtm
@@ -35,7 +37,7 @@ def simulate(copula, n):
 	elif type(copula).__name__ == "ArchimedeanCopula":
 		U = np.random.rand(n, d)
 		
-		# Laplace–Stieltjes invert transform
+		# LaplaceâStieltjes invert transform
 		LSinv = { 'clayton' : lambda theta: np.random.gamma(shape=1./theta), 
 				'gumbel' : lambda theta: stats.levy_stable.rvs(1./theta, 1., 0, math.cos(math.pi / (2 * theta))**theta), 
 				'frank' : lambda theta: stats.logser.rvs(1. - math.exp(-theta)), 

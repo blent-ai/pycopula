@@ -20,8 +20,10 @@ from numpy.linalg import inv
 
 import scipy
 import scipy.misc
-from scipy.stats import kendalltau, pearsonr, spearmanr, norm, multivariate_normal
+from scipy.stats import kendalltau, pearsonr, spearmanr, norm, t, multivariate_normal
 from scipy.linalg import sqrtm
+from scipy.optimize import fsolve
+import scipy.integrate as integrate
 
 # An abstract copula object
 class Copula():
@@ -35,7 +37,7 @@ class Copula():
 		dim : integer (greater than 1)
 			The dimension of the copula.
 		name : string
-			Default copula. 'indep' is for independency copula, 'frechet_up' the upper Fréchet-Hoeffding bound and 'frechet_down' the lower Fréchet-Hoeffding bound.
+			Default copula. 'indep' is for independency copula, 'frechet_up' the upper FrÃ©chet-Hoeffding bound and 'frechet_down' the lower FrÃ©chet-Hoeffding bound.
 		"""
 		if dim < 2 or int(dim) != dim:
 			raise ValueError("Copula dimension must be an integer greater than 1.")
@@ -137,7 +139,7 @@ class Copula():
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
-			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
+			raise NotImplementedError("PDF is not available for FrÃ©chet-Hoeffding bounds.")
 			
 	def concentration_down(self, x):
 		"""
@@ -194,7 +196,7 @@ class ArchimedeanCopula(Copula):
 		"""
 		super(ArchimedeanCopula, self).__init__(dim=dim)
 		self.family = family
-		self.parameter = 2.0
+		self.parameter = 1.5
 		if family == 'clayton':
 			self.generator = generators.claytonGenerator
 			self.generatorInvert = generators.claytonGeneratorInvert
@@ -286,7 +288,7 @@ class ArchimedeanCopula(Copula):
 
 		# Exactly 0 causes instability during computing for these copulas
 		if self.family in [ "frank", "clayton"] and theta == 0:
-			theta = 1e-10
+			theta = 1e-8
 
 		# For each family, the structure is the same
 		if self.family == 'clayton':
@@ -404,9 +406,12 @@ class ArchimedeanCopula(Copula):
 				self.parameter = 2. * self.kendall / (1. - self.kendall)
 			elif self.family == 'gumbel':
 				self.parameter = 1. / (1. - self.kendall)
+			elif self.family == 'frank':
+				def target(x):
+					return 1 - 4 / x + 4 / x**2 * integrate.quad(lambda t: t / (np.exp(t) - 1), np.finfo(np.float32).eps, x)[0] - self.kendall
+				self.parameter = fsolve(target, 1)[0]
 			else:
 				raise Exception("Moments estimation is not available for this copula.")
-			
 			
 		# Canonical Maximum Likelihood Estimation
 		elif method == 'cmle':
@@ -419,17 +424,16 @@ class ArchimedeanCopula(Copula):
 				pobs.append(u_i)
 
 			pobs = np.transpose(np.asarray(pobs))
-			
 
 			is_scalar = True
-			theta_start = np.array(1.)
+			theta_start = np.array(0.5)
 			bounds = theta_bounds
 			if bounds == None:
 				if self.family == 'amh':
 					bounds = (-1, 1 - 1e-6)
 					is_scalar = False
 				elif self.family == 'clayton':
-					bounds = (-1, None)
+					bounds = (0, 10)
 				elif self.family in ['gumbel', 'joe'] :
 					bounds = (1, None)
 					is_scalar = False
@@ -464,7 +468,7 @@ class ArchimedeanCopula(Copula):
 				if self.family == 'amh':
 					bounds = (-1, 1 - 1e-6)
 				elif self.family == 'clayton':
-					bounds = (-1, None)
+					bounds = (0, None)
 				elif self.family in ['gumbel', 'joe'] :
 					bounds = (1, None)
 
@@ -484,78 +488,76 @@ class ArchimedeanCopula(Copula):
 		return self.parameter, estimationData
 		
 class GaussianCopula(Copula):
-	def __init__(self, dim=2, sigma=[[1, 0.8], [0.8, 1]]):
+
+	def __init__(self, dim=2, R=[[1, 0.5], [0.5, 1]]):
 		super(GaussianCopula, self).__init__(dim=dim)
-		self.setCovariance(sigma)
+		self.set_corr(R)
 
 	def __str__(self):
-		return "Gaussian Copula :\n*Covariance : \n" + str(self.sigma)
+		return "Gaussian Copula :\n*Correlation : \n" + str(self.R)
 
 	def cdf(self, x):
 		self._check_dimension(x)
-		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.sigma)
+		return multivariate_normal.cdf([ norm.ppf(u) for u in x ], cov=self.R)
 
-	def setCovariance(self, sigma):
+	def set_corr(self, R):
 		"""
-		Set the covariance of the copula.
+		Set the Correlation matrix of the copula.
 
 		Parameters
 		----------
-		sigma : numpy array (of size copula dimensions * copula dimension)
-			The definite positive covariance matrix. Note that you should check yourself if the matrix is definite positive.
+		R : numpy array (of size copula dimensions * copula dimension)
+			The definite positive correlation matrix. Note that you should check yourself if the matrix is definite positive.
 		"""
-		S = np.asarray(sigma)
+		S = np.asarray(R)
 		if len(S.shape) > 2:
 			raise ValueError("2-dimensional array expected, get {0}-dimensional array.".format(len(S.shape)))
 		if S.shape[0] != S.shape[1]:
-			raise ValueError("Covariance matrix must be a squared matrix of dimension {0}".format(self.dim))
-		if len([ 1 for i in range(S.shape[0]) if S[i, i] <= 0]) > 0:
-			raise ValueError("Null or negative variance encountered in covariance matrix.")
+			raise ValueError("Correlation matrix must be a squared matrix of dimension {0}".format(self.dim))
 		if not(np.array_equal(np.transpose(S), S)):
-			raise ValueError("Covariance matrix is not symmetric.")
-		self.sigma = S
-		self.sigmaDet = np.linalg.det(S)
-		self.sigmaInv = np.linalg.inv(S)
+			raise ValueError("Correlation matrix is not symmetric.")
+		self.R = S
+		self._R_det = np.linalg.det(S)
+		self._R_inv = np.linalg.inv(S)
 		
-	def getCovariance(self):
-		return self.sigma
+	def get_corr(self):
+		return self.R
 
 	def pdf(self, x):
 		self._check_dimension(x)
-		#return self.pdf_param(x, self.sigma)
 		u_i = norm.ppf(x)
-		return self.sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self.sigmaInv - np.identity(self.dim), u_i)))
+		return self._R_det**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(self._R_inv - np.identity(self.dim), u_i)))
 		
-	def pdf_param(self, x, sigma):
+	def pdf_param(self, x, R):
 		self._check_dimension(x)
-		if self.dim == 2 and not(hasattr(sigma, '__len__')):
-			sigma = [sigma]
-		if len(np.asarray(sigma).shape) == 2 and len(sigma) != self.dim:
+		if self.dim == 2 and not(hasattr(R, '__len__')):
+			R = [R]
+		if len(np.asarray(R).shape) == 2 and len(R) != self.dim:
 			raise ValueError("Expected covariance matrix of dimension {0}.".format(self.dim))
 		u = norm.ppf(x)
 		
 		cov = np.ones([ self.dim, self.dim ])
 		idx = 0
-		if len(np.asarray(sigma).shape) <= 1:
-			if len(sigma) == self.dim * (self.dim - 1) / 2:
+		if len(np.asarray(R).shape) <= 1:
+			if len(R) == self.dim * (self.dim - 1) / 2:
 				for j in range(self.dim):
 					for i in range(j + 1, self.dim):
-						cov[j][i] = sigma[idx]
-						cov[i][j] = sigma[idx]
+						cov[j][i] = R[idx]
+						cov[i][j] = R[idx]
 						idx += 1
 			else:
 				raise ValueError("Expected covariance matrix, get an array.")
 		
 		if self.dim == 2:
-			sigmaDet = cov[0][0] * cov[1][1] - cov[0][1]**2
-			sigmaInv = 1. / sigmaDet * np.asarray([[ cov[1][1], -cov[0][1]], [ -cov[0][1], cov[0][0] ]])
+			RDet = cov[0][0] * cov[1][1] - cov[0][1]**2
+			RInv = 1. / RDet * np.asarray([[ cov[1][1], -cov[0][1]], [ -cov[0][1], cov[0][0] ]])
 		else:
-			sigmaDet = np.linalg.det(cov)
-			sigmaInv = np.linalg.inv(cov)
-		return [ sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(sigmaInv - np.identity(self.dim), u_i))) for u_i in u ]
+			RDet = np.linalg.det(cov)
+			RInv = np.linalg.inv(cov)
+		return [ RDet**(-0.5) * np.exp(-0.5 * np.dot(u_i, np.dot(RInv - np.identity(self.dim), u_i))) for u_i in u ]
 		
 	def quantile(self,  x):
-		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.sigma)
+		return multivariate_normal.ppf([ norm.ppf(u) for u in x ], cov=self.R)
 
 	def fit(self, X, method='cmle', verbose=True, **kwargs):
 		"""
@@ -608,64 +610,70 @@ class GaussianCopula(Copula):
 				
 				# Computation of det and invert matrix
 				if self.dim == 2:
-					sigmaDet = S[0][0] * S[1][1] - rho**2
-					sigmaInv = 1. / sigmaDet * np.asarray([[ S[1][1], -rho], [ -rho, S[0][0] ]])
+					RDet = S[0, 0] * S[1, 1] - rho**2
+					RInv = 1. / RDet * np.asarray([[ S[1, 1], -rho], [ -rho, S[0, 0] ]])
 				else:
-					sigmaDet = np.linalg.det(S)
-					sigmaInv = np.linalg.inv(S)
+					RDet = np.linalg.det(S)
+					RInv = np.linalg.inv(S)
 				
 				# Log-likelihood
 				lh = 0
 				for i in range(n):
-					cDens = sigmaDet**(-0.5) * np.exp(-0.5 * np.dot(ICDF[i,  :], np.dot(sigmaInv - np.identity(self.dim), ICDF[i,  :])))
+					cDens = RDet**(-0.5) * np.exp(-0.5 * np.dot(ICDF[i,  :], np.dot(RInv, ICDF[i,  :])))
 					lh += np.log(cDens)
 
-				return lh
+				return -lh
 
 			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
-			res = estimation.cmle(log_likelihood, theta_start=rho_start, theta_bounds=None, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
+			res = estimation.cmle(log_likelihood,
+				theta_start=rho_start, theta_bounds=None,
+				optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'),
+				bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			rho = res['x']
 		elif method == 'mle':
 			rho_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
 			res, estimationData = estimation.mle(self, X, marginals=kwargs.get('marginals', None), hyper_param=kwargs.get('hyper_param', None), hyper_param_start=kwargs.get('hyper_param_start', None), hyper_param_bounds=kwargs.get('hyper_param_bounds', None), theta_start=rho_start, optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'), bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
 			rho = res['x']
 			
-		self.sigma = np.identity(self.dim)
+		self.R = np.identity(self.dim)
 		# We extract rho values to covariance matrix
 		for i in range(self.dim - 1):
 			for j in range(i + 1,  self.dim):
-				self.sigma[i][j] = rho[i * (self.dim - 1) + j - 1]
-				self.sigma[self.dim - i - 1][self.dim - j - 1] = self.sigma[i][j]
+				self.R[i][j] = rho[i * (self.dim - 1) + j - 1]
+				self.R[self.dim - i - 1][self.dim - j - 1] = self.R[i][j]
 			
 		# We compute the nearest semi-definite positive matrix for the covariance matrix
-		self.sigma = math_misc.nearPD(self.sigma)
-		self.setCovariance(self.sigma)
+		self.R = math_misc.nearPD(self.R)
+		self.set_corr(self.R)
 
 class StudentCopula(Copula):
 	
-	def __init__(self, dim=2, df=1, sigma=[[1, 0.6], [0.6, 1]]):
+	def __init__(self, dim=2, df=1, R=[[1, 0], [0, 1]]):
 		super(StudentCopula, self).__init__(dim=dim)
 		self.df = df
-		self.sigma = sigma
+		self.R = R
+
+	def __str__(self):
+		return "Student Copula :\n*\t DF : {:1.3f}".format(self.df) + "\n*\t Correlation : \n" + str(self.R)
 		
-	def getFreedomDegrees(self):
+	def get_df(self):
 		return self.df
 		
-	def setFreedomDegrees(self, df):
+	def set_df(self, df):
 		if df <= 0:
 			raise ValueError("The degrees of freedom must be strictly greater than 0.")
 		self.df = df
 		
-	def setCovariance(self, sigma):
+	def set_corr(self, R):
 		"""
 		Set the covariance of the copula.
 
 		Parameters
 		----------
-		sigma : numpy array (of size copula dimensions * copula dimension)
+		R : numpy array (of size copula dimensions * copula dimension)
 			The definite positive covariance matrix. Note that you should check yourself if the matrix is definite positive.
 		"""
-		S = np.asarray(sigma)
+		S = np.asarray(R)
 		if len(S.shape) > 2:
 			raise ValueError("2-dimensional array expected, get {0}-dimensional array.".format(len(S.shape)))
 		if S.shape[0] != S.shape[1]:
@@ -674,16 +682,17 @@ class StudentCopula(Copula):
 			raise ValueError("Null or negative variance encountered in covariance matrix.")
 		if not(np.array_equal(np.transpose(S), S)):
 			raise ValueError("Covariance matrix is not symmetric.")
-		self.sigma = S
+		self.R = S
 		
-	def getCovariance(self):
-		return self.sigma
+	def get_corr(self):
+		return self.R
 		
 	def cdf(self, x):
 		self._check_dimension(x)
 		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
+
 		def fun(a, b):
-			return multivariate_t_distribution(np.asarray([a, b]), np.asarray([0, 0]), self.sigma, self.df, self.dim)
+			return multivariate_t_distribution(np.asarray([a, b]), np.asarray([0, 0]), self.R, self.df, self.dim)
 			
 		lim_0 = lambda x: -10
 		lim_1 = lambda x: tv[1]
@@ -692,12 +701,122 @@ class StudentCopula(Copula):
 		
 	def pdf(self, x):
 		self._check_dimension(x)
-		D = sqrtm(np.diag(np.diag(self.sigma)))
-		Dinv = inv(D)
-		P = np.dot(np.dot(Dinv, self.sigma), Dinv)
 		
 		tv = np.asarray([ scipy.stats.t.ppf(u, df=self.df) for u in x ])
 		prod = 1
 		for i in range(self.dim):
 			prod *= scipy.stats.t.pdf(tv[i], df=self.df)
-		return multivariate_t_distribution(tv, 0, P, self.df, self.dim) / prod
+		return multivariate_t_distribution(tv, 0, self.R, self.df, self.dim) / prod
+
+	def fit(self, X, method='cmle', df_fixed=False, verbose=True, **kwargs):
+		"""
+		Fits the Student copula with specified data.
+
+		Parameters
+		----------
+		X : numpy array (of size n * copula dimension)
+			The data to fit.
+		method : str
+			The estimation method to use. Default is 'cmle'.
+		df_fixed : bool
+			Optimizes degrees of freedom if set to False.
+		verbose : bool
+			Output various informations during fitting process.
+		**kwargs
+			Arguments of method. See estimation for more details.
+
+		Returns
+		-------
+		float
+			The estimated parameters of the Gaussian copula.
+		"""
+		print("Fitting Student copula.")
+		n = X.shape[0]
+		if n < 1:
+			raise ValueError("At least two values are needed to fit the copula.")
+		self._check_dimension(X[0, :])
+
+		# Canonical Maximum Likelihood Estimation
+		if method == 'cmle':
+			# Pseudo-observations from real data X
+			pobs = []
+			for i in range(self.dim):
+				order = X[:,i].argsort()
+				ranks = order.argsort()
+				u_i = [ (r + 1) / (n + 1) for r in ranks ]
+				pobs.append(u_i)
+
+			pobs = np.transpose(np.asarray(pobs))
+
+			ICDF = []
+			if df_fixed:
+				ICDF = t.ppf(pobs, df=self.df)
+
+			def log_likelihood(params):
+				if df_fixed:
+					nu = self.df
+					rho = params
+				else:
+					nu = params[0]
+					rho = params[1:]
+				S = np.identity(self.dim)
+
+				if df_fixed:
+					t_inv = ICDF
+				else:
+					t_inv = t.ppf(pobs, df=nu)
+				
+				# We place rho values in the up and down triangular part of the covariance matrix
+				for i in range(self.dim - 1):
+					for j in range(i + 1,  self.dim):
+						S[i][j] = rho[i * (self.dim - 1) + j - 1]
+						S[self.dim - i - 1][self.dim - j - 1] = S[i][j]
+				
+				# Computation of det and invert matrix
+				if self.dim == 2:
+					RDet = S[0, 0] * S[1, 1] - rho**2
+					RInv = 1. / RDet * np.asarray([[ S[1, 1], -rho], [ -rho, S[0, 0] ]])
+				else:
+					RDet = np.linalg.det(S)
+					RInv = np.linalg.inv(S)
+
+				D = sqrtm(np.diag(np.diag(S)))
+				Dinv = inv(D)
+				P = np.dot(np.dot(Dinv, S), Dinv)
+				
+				# Log-likelihood
+				lh = 0
+				for i in range(n):
+					cDens = math_misc.multivariate_t_distribution(t_inv[i,  :], 0, P, nu, self.dim)
+					lh += np.log(cDens)
+
+				return -lh
+
+			x_start = [ 0.0 for i in range(int(self.dim * (self.dim - 1) / 2)) ]
+			if not(df_fixed):
+				x_start = [ 1.0 ] + x_start
+			
+			res = estimation.cmle(log_likelihood,
+				theta_start=x_start, theta_bounds=None,
+				optimize_method=kwargs.get('optimize_method', 'Nelder-Mead'),
+				bounded_optimize_method=kwargs.get('bounded_optimize_method', 'SLSQP'))
+			fitted_params = res['x']
+
+		self.R = np.identity(self.dim)
+		# We extract rho values to covariance matrix
+		if df_fixed:
+			nu = self.df
+			rho = fitted_params
+		else:
+			nu = fitted_params[0]
+			rho = fitted_params[1:]
+
+		for i in range(self.dim - 1):
+			for j in range(i + 1,  self.dim):
+				self.R[i][j] = rho[i * (self.dim - 1) + j - 1]
+				self.R[self.dim - i - 1][self.dim - j - 1] = self.R[i][j]
+			
+		# We compute the nearest semi-definite positive matrix for the covariance matrix
+		self.R = math_misc.nearPD(self.R)
+		self.set_corr(self.R)
+		self.set_df(nu)
