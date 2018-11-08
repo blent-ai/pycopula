@@ -9,7 +9,7 @@ with open('requirements.txt', 'r') as f:
 	required = f.read().splitlines()
 
 setup(name='pycopula',
-      version='0.1.4',
+      version='0.1.5',
       description='Python copulas library for dependency modeling',
       author='Maxime Jumelle',
       author_email='maxime@aipcloud.io',
