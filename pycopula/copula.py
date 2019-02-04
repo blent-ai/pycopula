@@ -37,7 +37,7 @@ class Copula():
 		dim : integer (greater than 1)
 			The dimension of the copula.
 		name : string
-			Default copula. 'indep' is for independency copula, 'frechet_up' the upper FrÃ©chet-Hoeffding bound and 'frechet_down' the lower FrÃ©chet-Hoeffding bound.
+			Default copula. 'indep' is for independence copula, 'frechet_up' the upper Fréchet-Hoeffding bound and 'frechet_down' the lower Fréchet-Hoeffding bound.
 		"""
 		if dim < 2 or int(dim) != dim:
 			raise ValueError("Copula dimension must be an integer greater than 1.")
@@ -139,11 +139,11 @@ class Copula():
 		if self.name == 'indep':
 			return sum([ np.prod([ x[j] for j in range(self.dim) if j != i ]) for i in range(self.dim) ])
 		elif self.name in [ 'frechet_down', 'frechet_up' ]:
-			raise NotImplementedError("PDF is not available for FrÃ©chet-Hoeffding bounds.")
+			raise NotImplementedError("PDF is not available for Fréchet-Hoeffding bounds.")
 			
 	def concentration_down(self, x):
 		"""
-		Returns the theoritical lower concentration function.
+		Returns the theoretical lower concentration function.
 		
 		Parameters
 		----------
