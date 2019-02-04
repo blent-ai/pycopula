@@ -24,9 +24,21 @@ def simulate(copula, n):
     if type(copula).__name__ == "Copula" and copula.name == "indep":
         for i in range(n):
             X.append([np.random.uniform() for j in range(d)])
+    elif type(copula).__name__ == "Copula" and copula.name == "frechet_up":
+        for i in range(n):
+            Xi = np.random.uniform(size=d)
+            Xi = np.full_like(Xi, Xi.min())
+            X.append(Xi)
+    elif type(copula).__name__ == "Copula" and copula.name == "frechet_down":
+        if d != 2:
+            raise ValueError("Fréchet lower bound is not a copula for dimensions other than 2")
+        for i in range(n):
+            Xi = np.random.uniform(size=2)
+            Xi[1] = 1 - Xi[0]
+            X.append(Xi)
     elif type(copula).__name__ == "GaussianCopula":
         # We get correlation matrix from covariance matrix
-        Sigma = copula.getCovariance()
+        Sigma = copula.get_corr()
         D = sqrtm(np.diag(np.diag(Sigma)))
         Dinv = inv(D)
         P = np.dot(np.dot(Dinv, Sigma), Dinv)
