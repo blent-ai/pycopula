@@ -59,8 +59,8 @@ def simulate(copula, n):
                 'amh' : lambda theta: stats.geom.rvs(theta)}
 
         for i in range(n):
-            V = LSinv[copula.getFamily()](copula.getParameter())
-            X_i = [ copula.inverseGenerator(-np.log(u) / V) for u in U[i, :] ]
+            V = LSinv[copula.getFamily()](copula.get_parameter())
+            X_i = [ copula.inverse_generator(-np.log(u) / V) for u in U[i, :] ]
             X.append(X_i)
     elif type(copula).__name__ == "StudentCopula":
         nu = copula.getFreedomDegrees()
