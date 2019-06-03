@@ -5,7 +5,7 @@
 
 PyCopula is an easy-to-use Python library that allows you to study random variables dependencies with copulas. It comes with useful tools and features to plot, estimate or simulate on copulas.
 
-* [Online Documentation](https://maximejumelle.github.io/pycopula/)
+* [Online Documentation](https://blent-ai.github.io/pycopula)
 
 ## Installation
 Installation via *pip* always offers you the last stable version of the package.
