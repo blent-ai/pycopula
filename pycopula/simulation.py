@@ -63,8 +63,8 @@ def simulate(copula, n):
             X_i = [ copula.inverse_generator(-np.log(u) / V) for u in U[i, :] ]
             X.append(X_i)
     elif type(copula).__name__ == "StudentCopula":
-        nu = copula.getFreedomDegrees()
-        Sigma = copula.getCovariance()
+        nu = copula.get_df()
+        Sigma = copula.get_corr()
 
         for i in range(n):
             Z = multivariate_normal.rvs(size=1, cov=Sigma)
